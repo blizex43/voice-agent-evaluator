@@ -1,0 +1,8 @@
+groq
+twilio
+python-dotenv
+requests
+fastapi
+uvicorn
+ngrok
+pyee
