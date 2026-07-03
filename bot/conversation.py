@@ -1,8 +1,8 @@
 from typing import Any, Dict, List, Optional
 from .llm import LLMClient
-from enums.prompts import initial_sys_prompt
+from enums.prompts import initial_sys_prompt, agent_title, user_title
 from structs.custom import Message
-
+from enums.model import max_history
 
 class Conversation:
     def __init__(
@@ -15,16 +15,18 @@ class Conversation:
         self.session_id = session_id
         self.metadata = metadata or {}
         self.history: List[Message] = []
+        self.role = agent_title
+        self.user_role = user_title
         self.turn_index = 0
         # LLM client (Groq)
         self.llm = LLMClient()
-        self.system_prompt = f"{initial_sys_prompt}\n Scenario: ${scenario}"
+        self.system_prompt = f"{initial_sys_prompt}\nYour Role is {self.role}\nUser role is: {self.user_role}\nScenario: ${self.scenario}"
         print(self.system_prompt)
 
     def add_message(self, role: str, content: str):
         self.history.append({"role": role, "content": content})
 
-    def next_patient_message(self) -> Optional[str]:
+    def next_user_message(self) -> Optional[str]:
         if self.turn_index >= len(self.scenario):
             return None
 
@@ -33,7 +35,7 @@ class Conversation:
 
         return msg["content"]
 
-    def agent_reply(self, patient_message: str) -> str:
+    def agent_reply(self, user_message: str) -> str:
         """
         REAL LLM CALL (Groq)
         """
@@ -42,32 +44,31 @@ class Conversation:
             {"role": "system", "content": self.system_prompt},
         ]
 
-        # include last few messages for context (important for cost + performance)
-        for m in self.history[-15:]:
+        for m in self.history[-max_history:]:
             messages.append(m)
 
         # current patient input
-        messages.append({"role": "user", "content": patient_message})
+        messages.append({"role": self.user_role, "content": user_message})
         return self.llm.chat(messages)
 
-    def handle_patient_message(self, patient_message: str) -> str:
-        agent_msg = self.agent_reply(patient_message)
-        self.add_message("user", patient_message)
-        self.add_message("assistant", agent_msg)
+    def handle_user_message(self, user_message: str) -> str:
+        agent_msg = self.agent_reply(user_message)
+        self.add_message(self.user_role, user_message)
+        self.add_message(self.role, agent_msg)
         return agent_msg
 
     def run(self):
         print("=== Conversation Start ===")
 
         while True:
-            patient_msg = self.next_patient_message()
+            patient_msg = self.next_user_message()
 
             if patient_msg is None:
                 break
 
             print(f"Patient: {patient_msg}")
 
-            agent_msg = self.handle_patient_message(patient_msg)
+            agent_msg = self.handle_user_message(patient_msg)
 
             print(f"Agent: {agent_msg}")
 

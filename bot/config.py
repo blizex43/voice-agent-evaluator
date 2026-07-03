@@ -1,13 +1,7 @@
 from dataclasses import dataclass
 from typing import Iterable
 from enums.collections import credentials, urls
-
-
-@dataclass(frozen=True)
-class ConfigCheck:
-    name: str
-    value: str | None
-
+from classes.dataclasses import ConfigCheck
 
 COMMON_KEYS = [
     ConfigCheck("GROQ_API_KEY", credentials["groq"]["api_key"]),

@@ -1,10 +1,6 @@
 from groq import Groq
-from dotenv import load_dotenv
 from enums.collections import credentials
-from enums.model import model_name, model_temperature, streaming_enabled, max_tokens_generated
-load_dotenv()
-
-
+from enums.model import model_name, model_temperature, streaming_enabled
 class LLMClient:
     def __init__(self):
         self.client = Groq(api_key=credentials["groq"]["api_key"])
@@ -13,11 +9,12 @@ class LLMClient:
         """
         messages format:
         [
-            {"role": "system", "content": "..."},
-            {"role": "user", "content": "..."}
+            "{""role": "system", "content": "..."},
+            {"role": "{user_title}", "content": "..."}
+            {"role": "{agent_title}", "content": "..."}
         ]
         """
-
+        print(messages)
         response = self.client.chat.completions.create(
             model=model, messages=messages, temperature=model_temperature, stream=streaming_enabled
         )

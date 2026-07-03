@@ -6,21 +6,15 @@ from typing import Dict
 import requests
 from enums.collections import credentials
 from enums.dir import RECORDING_DIR
-
-
-def recording_paths(recording_sid: str) -> Dict[str, Path]:
-    RECORDING_DIR.mkdir(parents=True, exist_ok=True)
-    safe_id = recording_sid.replace("/", "_").replace("\\", "_")
-    return {
-        "json": RECORDING_DIR / f"{safe_id}.json",
-        "md": RECORDING_DIR / f"{safe_id}.md",
-        "audio": RECORDING_DIR / f"{safe_id}.mp3",
-    }
+from util.paths import ensure_output_dir, get_incremented_file_dirs
+def recording_paths() -> Dict[str, Path]:
+    ensure_output_dir(RECORDING_DIR)
+    return get_incremented_file_dirs("report_", RECORDING_DIR, {"json": "json", "md": "md", "audio": "mp3"})
 
 
 def save_recording_metadata(form: Dict[str, str]) -> Dict[str, Path]:
     recording_sid = form.get("RecordingSid") or form.get("CallSid") or "unknown-recording"
-    paths = recording_paths(recording_sid)
+    paths = recording_paths()
     payload = {
         "updated_at": datetime.now(timezone.utc).isoformat(),
         "call_sid": form.get("CallSid"),
@@ -57,7 +51,7 @@ def download_recording_audio(form: Dict[str, str]) -> Path | None:
         return None
 
     audio_url = recording_url if recording_url.endswith(".mp3") else f"{recording_url}.mp3"
-    audio_path = recording_paths(recording_sid)["audio"]
+    audio_path = recording_paths()["audio"]
     response = requests.get(audio_url, auth=(account_sid, auth_token), timeout=30)
     response.raise_for_status()
     audio_path.write_bytes(response.content)

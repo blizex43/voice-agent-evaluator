@@ -2,7 +2,6 @@ import time
 import threading
 from twilio.rest import Client
 from enums.collections import credentials, urls
-from .listeners import parser_signal
 from bot.listeners import call_signal, call_ended_event
 
 class Caller:
@@ -15,9 +14,6 @@ class Caller:
         self.recent_call = None
         self._status_watcher = None
         self._stop_watcher = threading.Event()
-
-        # Register signal handler for parser success events
-        parser_signal.on("parser_succeeded", self._handle_parser_signal)
 
     def end_call(self) -> None:
         """End the most recent active call"""
@@ -49,12 +45,6 @@ class Caller:
                 break
 
             time.sleep(2)
-
-    def _handle_parser_signal(self, parser_name: str, input: str) -> None:
-        """Handle parser success signals - fire the most recent active call"""
-        
-        if parser_name == "parser_end_call":
-            self.end_call()
 
     def make_call(self):
         base_url: str = urls["endpoint"]

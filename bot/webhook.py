@@ -13,9 +13,8 @@ from .parser import resolve_parser_reply, parse_value
 from typing import Literal
 from structs.parser import ParserFunctionNamesType
 from twilio.twiml.voice_response import VoiceResponse
-
+from enums.logger import logger
 app = FastAPI()
-
 conversations: dict[str, Conversation] = {}
 caller_instance = Caller()
 
@@ -58,7 +57,6 @@ async def voice_webhook(request: Request):
     """
     Twilio will hit this endpoint during a call.
     """
-    print("Pre Form Parse")
     form = await parse_twilio_form(request)
     call_sid = form.get("CallSid", "local-test-call")
     user_input = form.get("SpeechResult", "")  # Twilio speech input
@@ -72,20 +70,15 @@ async def voice_webhook(request: Request):
             metadata={"call_sid": call_sid, "scenario": scenario},
         )
         conversations[call_sid] = conversation
-    print("Pre Patient Reply")
-    reply = conversation.handle_patient_message(user_input or "Hello")
-    print("Post Patient Reply")
-    save_transcript(call_sid, conversation.history, conversation.metadata)
-    save_bug_report(call_sid, conversation.history)
-    print("Pre-resolve")
+    reply = conversation.handle_user_message(user_input or "Hello")
     parsed_say = parse_value(reply, "parser_say")
     parsed_end = parse_value(reply, "parser_end_call")
-
     reply_text = parsed_say[0] if parsed_say else reply
     hang_up = parsed_end is not None
-
+    save_transcript(call_sid, conversation.history, conversation.metadata)
+    save_bug_report(call_sid, conversation.history)
     voice_response = append_reply_to_voice_response(reply=reply_text, hang_up=hang_up)
-    print(reply, voice_response.to_xml())
+    logger.info(f"{reply} {voice_response.to_xml()}")
     return Response(
         content=voice_response.to_xml(), media_type=media_type, status_code=200
     )
@@ -119,7 +112,9 @@ async def recording_status_webhook(request: Request):
             download_recording_audio(form)
         except Exception as exc:
             form["download_error"] = str(exc)
+            call_sid = form.get("CallSid", "None")
             save_recording_metadata(form)
+            logger.error(f'Failed to download recording audio!\nDownload Error: {form["download_error"]}\nSID: ${call_sid}')
 
     return Response(content="<Response />", media_type=media_type)
 

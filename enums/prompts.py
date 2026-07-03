@@ -67,6 +67,9 @@ Every response MUST contain exactly one pair of <say>...</say> tags.
 {parser_function_info}
 """
 
+agent_title = "patient"
+user_title = "assistant"
+
 patient_instructions_enum: PatientInstructionsType = {
     "default": 
         """

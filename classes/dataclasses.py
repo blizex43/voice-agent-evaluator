@@ -15,3 +15,8 @@ class Patient:
 class Scenario:
     patient: Patient
     instructions: str
+
+@dataclass(frozen=True)
+class ConfigCheck:
+    name: str
+    value: str | None

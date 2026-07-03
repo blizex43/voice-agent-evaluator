@@ -4,14 +4,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 from enums.dir import TRANSCRIPT_DIR
-
+from util.paths import ensure_output_dir, get_incremented_file_dirs
 
 def utc_timestamp() -> str:
     return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
 
-
-def ensure_output_dirs() -> None:
-    TRANSCRIPT_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def serialize_metadata(metadata: Dict[str, Any]) -> Dict[str, Any]:
@@ -24,13 +21,9 @@ def serialize_metadata(metadata: Dict[str, Any]) -> Dict[str, Any]:
     return serialized
 
 
-def transcript_paths(session_id: str) -> Dict[str, Path]:
-    ensure_output_dirs()
-    safe_id = session_id.replace("/", "_").replace("\\", "_")
-    return {
-        "json": TRANSCRIPT_DIR / f"{safe_id}.json",
-        "md": TRANSCRIPT_DIR / f"{safe_id}.md",
-    }
+def transcript_paths() -> Dict[str, Path]:
+    ensure_output_dir(TRANSCRIPT_DIR)
+    return get_incremented_file_dirs("report_", TRANSCRIPT_DIR, {"json": "json", "md": "md"})
 
 
 def save_transcript(
@@ -38,7 +31,7 @@ def save_transcript(
     messages: List[Dict[str, str]],
     metadata: Dict[str, Any] | None = None,
 ) -> Dict[str, Path]:
-    paths = transcript_paths(session_id)
+    paths = transcript_paths()
     payload = {
         "session_id": session_id,
         "updated_at": datetime.now(timezone.utc).isoformat(),
