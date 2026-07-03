@@ -50,7 +50,7 @@ def save_transcript(
 
     for message in messages:
         role = message.get("role", "unknown").title()
-        content = message.get("content", "").strip()
+        content = message.get("content", "").strip().replace("<say>", "").replace("</say>", "")
         if content:
             lines.extend([f"**{role}:** {content}", ""])
 

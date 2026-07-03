@@ -5,16 +5,16 @@ class LLMClient:
     def __init__(self):
         self.client = Groq(api_key=credentials["groq"]["api_key"])
 
-    def chat(self, messages, model=model_name):
+    async def chat(self, messages, model=model_name):
         """
         messages format:
         [
             "{""role": "system", "content": "..."},
-            {"role": "{user_title}", "content": "..."}
-            {"role": "{agent_title}", "content": "..."}
+            {"role": "user", "content": "..."}
+            {"role": "assistant", "content": "..."}
         ]
         """
-        print(messages)
+        # print(messages)
         response = self.client.chat.completions.create(
             model=model, messages=messages, temperature=model_temperature, stream=streaming_enabled
         )

@@ -12,8 +12,10 @@ from .listeners import parser_signal
 from .parser import resolve_parser_reply, parse_value
 from typing import Literal
 from structs.parser import ParserFunctionNamesType
+from structs.prompts import ScenarioNamesType
 from twilio.twiml.voice_response import VoiceResponse
 from enums.logger import logger
+
 app = FastAPI()
 conversations: dict[str, Conversation] = {}
 caller_instance = Caller()
@@ -60,25 +62,18 @@ async def voice_webhook(request: Request):
     form = await parse_twilio_form(request)
     call_sid = form.get("CallSid", "local-test-call")
     user_input = form.get("SpeechResult", "")  # Twilio speech input
-
-    conversation = conversations.get(call_sid)
-    if conversation is None:
-        scenario = get_scenario("random")
-        conversation = Conversation(
-            scenario_to_messages(scenario),
-            session_id=call_sid,
-            metadata={"call_sid": call_sid, "scenario": scenario},
-        )
-        conversations[call_sid] = conversation
-    reply = conversation.handle_user_message(user_input or "Hello")
-    parsed_say = parse_value(reply, "parser_say")
-    parsed_end = parse_value(reply, "parser_end_call")
+    conversation = conversations.get(call_sid) or get_generated_conversation(call_sid, "random")
+    reply = await conversation.handle_user_message(user_input or "Hello")
+    parsed_say, parsed_end = (
+        parse_value(reply, "parser_say"),
+        parse_value(reply, "parser_end_call"),
+    )
     reply_text = parsed_say[0] if parsed_say else reply
     hang_up = parsed_end is not None
-    save_transcript(call_sid, conversation.history, conversation.metadata)
-    save_bug_report(call_sid, conversation.history)
+    await save_history_to_file_async(call_sid, conversation)
+    logger.info("Post Save")
     voice_response = append_reply_to_voice_response(reply=reply_text, hang_up=hang_up)
-    logger.info(f"{reply} {voice_response.to_xml()}")
+    logger.info(f"{reply, reply_text}")
     return Response(
         content=voice_response.to_xml(), media_type=media_type, status_code=200
     )
@@ -114,9 +109,27 @@ async def recording_status_webhook(request: Request):
             form["download_error"] = str(exc)
             call_sid = form.get("CallSid", "None")
             save_recording_metadata(form)
-            logger.error(f'Failed to download recording audio!\nDownload Error: {form["download_error"]}\nSID: ${call_sid}')
+            logger.error(
+                f'Failed to download recording audio!\nDownload Error: {form["download_error"]}\nSID: ${call_sid}'
+            )
 
     return Response(content="<Response />", media_type=media_type)
+
+
+async def save_history_to_file_async(sid: str, conversation: Conversation) -> None:
+    save_transcript(sid, conversation.history, conversation.metadata)
+    save_bug_report(sid, conversation.history)
+
+
+def get_generated_conversation(sid: str, scenario_type: ScenarioNamesType | Literal["random"] = "random" ) -> Conversation:
+    scenario = get_scenario(scenario_type)
+    conversation = Conversation(
+        scenario_to_messages(scenario),
+        session_id=sid,
+        metadata={"call_sid": sid, "scenario": scenario},
+    )
+    conversations[sid] = conversation
+    return conversation
 
 
 def append_reply_to_voice_response(
@@ -133,12 +146,12 @@ def append_reply_to_voice_response(
     )
     if not hang_up:
         voice_response.gather(
-        input="speech",
-        action="/voice",
-        method="POST",
-        timeout=timeout,
-        speech_timeout=speech_timeout,
-    )
-    else: 
+            input="speech",
+            action="/voice",
+            method="POST",
+            timeout=timeout,
+            speech_timeout=speech_timeout,
+        )
+    else:
         voice_response.hangup()
     return voice_response

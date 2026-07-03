@@ -5,7 +5,6 @@ from typing import Dict, List
 from enums.bug_rules import BUG_RULES
 from enums.dir import REPORT_DIR
 from util.paths import get_incremented_file_dirs, ensure_output_dir
-from enums.prompts import user_title
 def _contains_any(text: str, terms: List[str]) -> bool:
     normalized = text.lower()
     return any(term in normalized for term in terms)
@@ -34,7 +33,7 @@ def detect_bugs(messages: List[Dict[str, str]]) -> List[Dict[str, str]]:
             continue
 
         for index, message in enumerate(messages):
-            if message.get("role") != user_title:
+            if message.get("role") != "user":
                 continue
 
             patient_text = message.get("content", "")

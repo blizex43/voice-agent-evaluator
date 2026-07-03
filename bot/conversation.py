@@ -21,7 +21,6 @@ class Conversation:
         # LLM client (Groq)
         self.llm = LLMClient()
         self.system_prompt = f"{initial_sys_prompt}\nYour Role is {self.role}\nUser role is: {self.user_role}\nScenario: ${self.scenario}"
-        print(self.system_prompt)
 
     def add_message(self, role: str, content: str):
         self.history.append({"role": role, "content": content})
@@ -35,7 +34,7 @@ class Conversation:
 
         return msg["content"]
 
-    def agent_reply(self, user_message: str) -> str:
+    async def agent_reply(self, user_message: str) -> str:
         """
         REAL LLM CALL (Groq)
         """
@@ -48,13 +47,13 @@ class Conversation:
             messages.append(m)
 
         # current patient input
-        messages.append({"role": self.user_role, "content": user_message})
-        return self.llm.chat(messages)
+        messages.append({"role": "user", "content": user_message})
+        return await self.llm.chat(messages)
 
-    def handle_user_message(self, user_message: str) -> str:
-        agent_msg = self.agent_reply(user_message)
-        self.add_message(self.user_role, user_message)
-        self.add_message(self.role, agent_msg)
+    async def handle_user_message(self, user_message: str) -> str:
+        agent_msg = await self.agent_reply(user_message)
+        self.add_message("user", user_message)
+        self.add_message("assistant", agent_msg)
         return agent_msg
 
     def run(self):
