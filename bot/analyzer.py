@@ -4,7 +4,11 @@ from pathlib import Path
 from typing import Dict, List
 from enums.bug_rules import BUG_RULES
 from enums.dir import REPORT_DIR
+from enums.logger import log_and_raise
+from enums.strings import FILE_EXT_JSON, FILE_EXT_MD, FILE_PREFIX_REPORT
 from util.paths import get_incremented_file_dirs, ensure_output_dir
+
+
 def _contains_any(text: str, terms: List[str]) -> bool:
     normalized = text.lower()
     return any(term in normalized for term in terms)
@@ -67,7 +71,27 @@ def detect_bugs(messages: List[Dict[str, str]]) -> List[Dict[str, str]]:
 
 def report_paths() -> Dict[str, Path]:
     ensure_output_dir(REPORT_DIR)
-    return get_incremented_file_dirs("report_", REPORT_DIR, {"json": "json", "md": "md"})
+    return get_incremented_file_dirs(
+        parent_dir=REPORT_DIR,
+        extensions={FILE_EXT_JSON: FILE_EXT_JSON, FILE_EXT_MD: FILE_EXT_MD},
+        prefix=FILE_PREFIX_REPORT,
+    )
+
+
+def _write_text(path: Path, content: str) -> None:
+    """Write text to disk, logging and re-raising any OSError."""
+    try:
+        path.write_text(content, encoding="utf-8")
+    except OSError as exc:
+        log_and_raise(exc, f"Failed to write text file {path}")
+
+
+def _write_json(path: Path, payload: dict) -> None:
+    """Serialize payload and write to disk, logging and re-raising any OSError."""
+    try:
+        path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    except OSError as exc:
+        log_and_raise(exc, f"Failed to write JSON file {path}")
 
 
 def save_bug_report(session_id: str, messages: List[Dict[str, str]]) -> Dict[str, Path]:
@@ -80,7 +104,7 @@ def save_bug_report(session_id: str, messages: List[Dict[str, str]]) -> Dict[str
         "bugs": bugs,
     }
 
-    paths["json"].write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    _write_json(paths[FILE_EXT_JSON], payload)
 
     lines = [
         f"# Bug Report: {session_id}",
@@ -104,5 +128,5 @@ def save_bug_report(session_id: str, messages: List[Dict[str, str]]) -> Dict[str
                 ]
             )
 
-    paths["md"].write_text("\n".join(lines), encoding="utf-8")
+    _write_text(paths[FILE_EXT_MD], "\n".join(lines))
     return paths

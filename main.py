@@ -10,6 +10,7 @@ from bot.listeners import call_signal, call_ended_event
 from bot.transcript import save_transcript
 from enums.dir import OUTPUT_DIR, RECORDING_DIR, REPORT_DIR, TRANSCRIPT_DIR
 from enums.scenarios import scenario_names, get_scenario, scenario_to_messages
+from enums.strings import SIMULATION_SESSION_PREFIX
 from structs.prompts import ScenarioNamesType
 
 
@@ -18,12 +19,17 @@ def ensure_output_dirs() -> None:
         directory.mkdir(parents=True, exist_ok=True)
 
 
+def build_simulation_session_id(scenario_name: ScenarioNamesType) -> str:
+    """Compose a unique session id for a simulation run."""
+    return f"{SIMULATION_SESSION_PREFIX}{scenario_name}-{uuid4().hex[:8]}"
+
+
 def run_simulation(scenario_name: ScenarioNamesType) -> None:
     validate_config(require_twilio=False)
     ensure_output_dirs()
 
     scenario = get_scenario(scenario_name)
-    session_id = f"simulation-{scenario_name}-{uuid4().hex[:8]}"
+    session_id = build_simulation_session_id(scenario_name)
     conversation = Conversation(
         scenario_to_messages(scenario),
         session_id=session_id,

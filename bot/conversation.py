@@ -1,8 +1,22 @@
 from typing import Any, Dict, List, Optional
 from .llm import LLMClient
+from enums.logger import log_info
 from enums.prompts import initial_sys_prompt, agent_title, user_title
 from structs.custom import Message
 from enums.model import max_history
+
+
+def _build_system_prompt(
+    scenario: List[Message], role: str, user_role: str
+) -> str:
+    """Compose the system prompt for the LLM given the scenario and role labels."""
+    return (
+        f"{initial_sys_prompt}\n"
+        f"Your Role is {role}\n"
+        f"User role is: {user_role}\n"
+        f"Scenario: ${scenario}"
+    )
+
 
 class Conversation:
     def __init__(
@@ -20,7 +34,7 @@ class Conversation:
         self.turn_index = 0
         # LLM client (Groq)
         self.llm = LLMClient()
-        self.system_prompt = f"{initial_sys_prompt}\nYour Role is {self.role}\nUser role is: {self.user_role}\nScenario: ${self.scenario}"
+        self.system_prompt = _build_system_prompt(scenario, self.role, self.user_role)
 
     def add_message(self, role: str, content: str):
         self.history.append({"role": role, "content": content})
@@ -38,7 +52,6 @@ class Conversation:
         """
         REAL LLM CALL (Groq)
         """
-
         messages = [
             {"role": "system", "content": self.system_prompt},
         ]
@@ -57,7 +70,7 @@ class Conversation:
         return agent_msg
 
     def run(self):
-        print("=== Conversation Start ===")
+        log_info("=== Conversation Start ===")
 
         while True:
             patient_msg = self.next_user_message()
@@ -65,10 +78,10 @@ class Conversation:
             if patient_msg is None:
                 break
 
-            print(f"Patient: {patient_msg}")
+            log_info(f"Patient: {patient_msg}")
 
             agent_msg = self.handle_user_message(patient_msg)
 
-            print(f"Agent: {agent_msg}")
+            log_info(f"Agent: {agent_msg}")
 
-        print("=== Conversation End ===")
+        log_info("=== Conversation End ===")

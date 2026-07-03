@@ -2,7 +2,12 @@ import time
 import threading
 from twilio.rest import Client
 from enums.collections import credentials, urls
+from enums.logger import log_info, logger, log_and_raise
+from enums.strings import POLL_INTERVAL_SECONDS
 from bot.listeners import call_signal, call_ended_event
+
+TERMINAL_CALL_STATUSES = {"completed", "canceled", "failed", "busy", "no-answer"}
+
 
 class Caller:
     def __init__(self):
@@ -17,52 +22,64 @@ class Caller:
 
     def end_call(self) -> None:
         """End the most recent active call"""
-        if self.recent_call:
-            call_sid = self.recent_call.sid
-            try:
-                # Update the call to complete it
-                self.client.calls(call_sid).update(status="completed")
-                print(f"Call ended: {call_sid}")
-            except Exception as e:
-                print(f"Error ending call {call_sid}: {e}")
+        if not self.recent_call:
+            return
+
+        call_sid = self.recent_call.sid
+        try:
+            # Update the call to complete it
+            self.client.calls(call_sid).update(status="completed")
+            log_info(f"Call ended: {call_sid}")
+        except Exception as exc:
+            log_and_raise(exc, f"Failed to end call {call_sid}")
 
     def _handle_call_completed(self, call_sid: str, status: str) -> None:
-        print(f"Call status changed to {status} for {call_sid}")
+        log_info(f"Call status changed to {status} for {call_sid}")
         call_ended_event.set()
         call_signal.emit("call.ended", call_sid, status)
 
+    def _fetch_call_status(self, call_sid: str) -> str | None:
+        """Fetch the current call status. Returns the status, or None on error."""
+        try:
+            return self.client.calls(call_sid).fetch().status
+        except Exception:
+            logger.exception(f"Error fetching call status for {call_sid}")
+            return None
+
     def _watch_call_status(self, call_sid: str) -> None:
         while not self._stop_watcher.is_set():
-            try:
-                call = self.client.calls(call_sid).fetch()
-                status = call.status
-            except Exception as e:
-                print(f"Error fetching call status for {call_sid}: {e}")
+            status = self._fetch_call_status(call_sid)
+            if status is None:
                 break
 
-            if status in {"completed", "canceled", "failed", "busy", "no-answer"}:
+            if status in TERMINAL_CALL_STATUSES:
                 self._handle_call_completed(call_sid, status)
                 break
 
-            time.sleep(2)
+            time.sleep(POLL_INTERVAL_SECONDS)
+
+    def _build_callback_urls(self) -> dict[str, str]:
+        base_url: str = urls["endpoint"]
+        return {
+            "voice": f"{base_url}/voice",
+            "call_status": f"{base_url}/call-status",
+            "recording_status": f"{base_url}/recording-status",
+        }
 
     def make_call(self):
-        base_url: str = urls["endpoint"]
-        voice_url = f"{base_url}/voice"
-        call_status_url = f"{base_url}/call-status"
-        recording_status_url = f"{base_url}/recording-status"
+        urls_map = self._build_callback_urls()
 
         call = self.client.calls.create(
             to=self.to_number,
             from_=self.from_number,
-            url=voice_url,
+            url=urls_map["voice"],
             method="POST",
-            status_callback=call_status_url,
+            status_callback=urls_map["call_status"],
             status_callback_event=["completed"],
             status_callback_method="POST",
             record=True,
             recording_channels="dual",
-            recording_status_callback=recording_status_url,
+            recording_status_callback=urls_map["recording_status"],
             recording_status_callback_event=["completed"],
             recording_status_callback_method="POST",
             trim="trim-silence",
@@ -75,5 +92,5 @@ class Caller:
             daemon=True,
         )
         self._status_watcher.start()
-        print(f"Call started: {call.sid}")
+        log_info(f"Call started: {call.sid}")
         return call.sid

@@ -4,11 +4,18 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 from enums.dir import TRANSCRIPT_DIR
+from enums.logger import log_and_raise
+from enums.strings import (
+    FILE_EXT_JSON,
+    FILE_EXT_MD,
+    FILE_PREFIX_TRANSCRIPT,
+    TIMESTAMP_FORMAT,
+)
 from util.paths import ensure_output_dir, get_incremented_file_dirs
 
-def utc_timestamp() -> str:
-    return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
 
+def utc_timestamp() -> str:
+    return datetime.now(timezone.utc).strftime(TIMESTAMP_FORMAT)
 
 
 def serialize_metadata(metadata: Dict[str, Any]) -> Dict[str, Any]:
@@ -23,7 +30,25 @@ def serialize_metadata(metadata: Dict[str, Any]) -> Dict[str, Any]:
 
 def transcript_paths() -> Dict[str, Path]:
     ensure_output_dir(TRANSCRIPT_DIR)
-    return get_incremented_file_dirs("report_", TRANSCRIPT_DIR, {"json": "json", "md": "md"})
+    return get_incremented_file_dirs(
+        parent_dir=TRANSCRIPT_DIR,
+        extensions={FILE_EXT_JSON: FILE_EXT_JSON, FILE_EXT_MD: FILE_EXT_MD},
+        prefix=FILE_PREFIX_TRANSCRIPT,
+    )
+
+
+def _write_text(path: Path, content: str) -> None:
+    try:
+        path.write_text(content, encoding="utf-8")
+    except OSError as exc:
+        log_and_raise(exc, f"Failed to write text file {path}")
+
+
+def _write_json(path: Path, payload: dict) -> None:
+    try:
+        path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    except OSError as exc:
+        log_and_raise(exc, f"Failed to write JSON file {path}")
 
 
 def save_transcript(
@@ -39,7 +64,7 @@ def save_transcript(
         "messages": messages,
     }
 
-    paths["json"].write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    _write_json(paths[FILE_EXT_JSON], payload)
 
     lines = [
         f"# Transcript: {session_id}",
@@ -54,5 +79,5 @@ def save_transcript(
         if content:
             lines.extend([f"**{role}:** {content}", ""])
 
-    paths["md"].write_text("\n".join(lines), encoding="utf-8")
+    _write_text(paths[FILE_EXT_MD], "\n".join(lines))
     return paths

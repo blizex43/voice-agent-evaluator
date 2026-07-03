@@ -24,3 +24,41 @@ logger.addHandler(file_handler)
 # Execution Demonstrations
 # logger.info("This text displays on the console, but is excluded from the file.")
 # logger.error("This serious error is written to both the file and console outputs.")
+
+
+# ---------------------------------------------------------------------------
+# Helper functions
+# ---------------------------------------------------------------------------
+# These wrappers exist so call sites stay readable and consistent.
+# Use `log_and_raise(exc, message)` at any risky site (file I/O, network,
+# LLM/agent reply) to log the failure with full context and re-raise the
+# original exception so the caller can decide what to do.
+# ---------------------------------------------------------------------------
+
+
+def log_info(message: str) -> None:
+    """Log an informational message."""
+    logger.info(message)
+
+
+def log_warning(message: str) -> None:
+    """Log a warning message."""
+    logger.warning(message)
+
+
+def log_error(message: str) -> None:
+    """Log an error message."""
+    logger.error(message)
+
+
+def log_and_raise(exc: BaseException, message: str | None = None) -> None:
+    """Log an error (with optional context) and re-raise the given exception.
+
+    The original exception is re-raised unchanged so callers can catch it
+    and the original traceback is preserved.
+    """
+    if message:
+        logger.error(f"{message}: {exc}")
+    else:
+        logger.error(str(exc))
+    raise exc
