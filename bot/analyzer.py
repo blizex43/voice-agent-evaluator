@@ -8,7 +8,6 @@ from enums.logger import log_and_raise
 from enums.strings import FILE_EXT_JSON, FILE_EXT_MD, FILE_PREFIX_REPORT
 from util.paths import get_incremented_file_dirs, ensure_output_dir
 
-
 def _contains_any(text: str, terms: List[str]) -> bool:
     normalized = text.lower()
     return any(term in normalized for term in terms)

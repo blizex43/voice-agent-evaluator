@@ -13,6 +13,7 @@ def scenario_builder(name: ScenarioNamesType) -> Scenario:
             goal=scenario["goal"],
             personality=scenario["personality"],
             interruption_level=scenario["interruption_level"],
+            voice_index=scenario["voice_index"]
         ),
         instructions=[scenario["instructions"]],
     )

@@ -7,8 +7,8 @@
 # File-name prefixes and extensions
 # ---------------------------------------------------------------------------
 FILE_PREFIX_REPORT = "report_"
-FILE_PREFIX_TRANSCRIPT = "report_"
-FILE_PREFIX_RECORDING = "report_"
+FILE_PREFIX_TRANSCRIPT = "transcript_"
+FILE_PREFIX_RECORDING = "recording_"
 
 FILE_EXT_JSON = "json"
 FILE_EXT_MD = "md"
@@ -30,10 +30,11 @@ EMPTY_TWIML = "<Response />"
 
 # ---------------------------------------------------------------------------
 # Twilio / session defaults
+# If DEFAULT_USER_INPUT is none, the agent will first listen instead of speak first
 # ---------------------------------------------------------------------------
 DEFAULT_CALL_SID = "local-test-call"
 DEFAULT_RECORDING_SID = "unknown-recording"
-DEFAULT_USER_INPUT = "Hello"
+DEFAULT_USER_INPUT = None
 
 SIMULATION_SESSION_PREFIX = "simulation-"
 

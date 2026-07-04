@@ -2,7 +2,7 @@ from typing import Any, Dict, List, Optional
 from .llm import LLMClient
 from enums.logger import log_info
 from enums.prompts import initial_sys_prompt, agent_title, user_title
-from structs.custom import Message
+from structs.custom import Message, Maybe
 from enums.model import max_history
 
 
@@ -19,6 +19,7 @@ def _build_system_prompt(
 
 
 class Conversation:
+
     def __init__(
         self,
         scenario: List[Message],

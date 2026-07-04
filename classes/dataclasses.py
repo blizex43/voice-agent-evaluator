@@ -8,6 +8,7 @@ class Patient:
     age: int
     goal: str
     personality: str  # e.g. "anxious", "angry", "calm"
+    voice_index: int
     interruption_level: float = 0.0  # 0.0 → 1.0
 
 
@@ -15,6 +16,7 @@ class Patient:
 class Scenario:
     patient: Patient
     instructions: str
+
 
 @dataclass(frozen=True)
 class ConfigCheck:

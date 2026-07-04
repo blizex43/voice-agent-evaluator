@@ -25,7 +25,8 @@ from .listeners import parser_signal
 from .parser import resolve_parser_reply
 from typing import Literal
 from structs.parser import ParserFunctionNamesType
-from structs.prompts import ScenarioNamesType
+from structs.prompts import ScenarioNamesType, Scenario
+from structs.custom import Maybe
 from twilio.twiml.voice_response import VoiceResponse
 
 app = FastAPI()
@@ -126,12 +127,15 @@ async def voice_webhook(request: Request):
     conversation = conversations.get(call_sid) or get_generated_conversation(
         call_sid, "random"
     )
+    scenario: Maybe[Scenario] = conversation.metadata.get("scenario")
+    if ((not DEFAULT_USER_INPUT) and (not user_input) and (conversation.metadata.get("call_status") == None)):
+        return Response(content=append_reply_to_voice_response("").to_xml(), media_type=MEDIA_TYPE, status_code=200)
+
     reply = await conversation.handle_user_message(user_input or DEFAULT_USER_INPUT)
     reply_text, hang_up = _resolve_speech_text_and_hangup(reply)
     await save_history_to_file_async(call_sid, conversation)
-    log_info("Post Save")
-    voice_response = append_reply_to_voice_response(reply=reply_text, hang_up=hang_up)
-    log_info(f"reply={reply!r} reply_text={reply_text!r}")
+    voice_response = append_reply_to_voice_response(reply=reply_text, hang_up=hang_up, voice_index=scenario.patient.voice_index if scenario is not None else None)
+    log_info(f"reply={reply!r} reply_text={reply_text!r} hang_up={hang_up}")
     return Response(
         content=voice_response.to_xml(), media_type=MEDIA_TYPE, status_code=200
     )
@@ -142,7 +146,7 @@ async def call_status_webhook(request: Request):
     form = await parse_twilio_form(request)
     call_sid = form.get("CallSid", DEFAULT_CALL_SID)
     call_status = form.get("CallStatus", "")
-    conversation = conversations.get(call_sid)
+    conversation = conversations.get(call_sid) 
 
     if conversation is not None:
         conversation.metadata["call_status"] = call_status

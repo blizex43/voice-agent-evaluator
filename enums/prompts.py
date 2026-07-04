@@ -62,7 +62,7 @@ The system supports parsable functions that can be triggered by specific pattern
 Example:
 <say>Thanks for your help. Have a great day.</say></end>
 
-Every response MUST contain exactly one pair of <say>...</say> tags.
+Every response MUST contain exactly one pair of <say>...</say> tags. Every message must always have both the prefix <say> and the suffix </say>.
 
 {parser_function_info}
 """
@@ -196,7 +196,8 @@ patient_autofill_enum: PatientAutofillType = {
         "goal":"Request a refill for blood pressure medication.",
         "personality":"calm but mildly concerned",
         "interruption_level":0.1,
-		"instructions": patient_instructions_enum["refill"]
+		"instructions": patient_instructions_enum["refill"],
+		"voice_index": 0,
 	},
 	"default": {
 		"name": "Jordan Lee",
@@ -204,7 +205,8 @@ patient_autofill_enum: PatientAutofillType = {
         "goal":"Request a refill for blood pressure medication.",
         "personality":"calm but mildly concerned",
         "interruption_level":0.1,
-		"instructions": patient_instructions_enum["default"]
+		"instructions": patient_instructions_enum["default"],
+		"voice_index": 0,
 	},
 	"angry": {
 		"name":"Elena Garcia",
@@ -212,7 +214,8 @@ patient_autofill_enum: PatientAutofillType = {
         "goal":"Complain about a billing issue after a previous visit.",
         "personality":"angry and impatient",
         "interruption_level":0.5,
-		"instructions": patient_instructions_enum["angry"]
+		"instructions": patient_instructions_enum["angry"],
+		"voice_index": 4,
 	},
 	"appointment": {
 		"name":"Maya Patel",
@@ -220,7 +223,8 @@ patient_autofill_enum: PatientAutofillType = {
         "goal":"Schedule a new patient appointment for persistent headaches.",
         "personality":"organized and direct",
         "interruption_level":0.0,
-		"instructions": patient_instructions_enum["appointment"]
+		"instructions": patient_instructions_enum["appointment"],
+		"voice_index": 0,
 	},
 	"insurance": {
 		"name":"Chris Morgan",
@@ -228,7 +232,8 @@ patient_autofill_enum: PatientAutofillType = {
         "goal":"Confirm whether the office accepts a new insurance plan.",
         "personality":"confused and detail-heavy",
         "interruption_level":0.2,
-		"instructions": patient_instructions_enum["insurance"]
+		"instructions": patient_instructions_enum["insurance"],
+		"voice_index": 1,
 	},
 	"urgent": {
 		"name":"Robert Kim",
@@ -236,6 +241,7 @@ patient_autofill_enum: PatientAutofillType = {
         "goal":"Ask whether chest pain can wait for an appointment.",
         "personality":"minimizing but worried",
         "interruption_level":0.1,
-		"instructions": patient_instructions_enum["urgent"]
+		"instructions": patient_instructions_enum["urgent"],
+		"voice_index": 1,
 	},
 }

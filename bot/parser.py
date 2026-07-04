@@ -34,8 +34,7 @@ def extract_inline(input: str, prefix: str, suffix: str) -> str | None:
         start = prefix_index + len(prefix)
         suffix_index = input.find(suffix, start)
         if suffix_index == -1:
-            return None
-
+            return input[start:]
         return input[start:suffix_index]
 
     if prefix:
@@ -103,7 +102,7 @@ def resolve_parser_reply(input: str) -> tuple[str, bool]:
         if result is None:
             continue
 
-        _, inline, matched_name = result
+        inline, _, matched_name = result
         return inline, matched_name == "parser_end_call"
 
     return input, False
@@ -119,7 +118,7 @@ def parse_response_for_matches(
         if result is None:
             continue
 
-        func, inline, _ = result
+        inline, func = result
         matches.append((func_name, func, inline))
 
     return matches
