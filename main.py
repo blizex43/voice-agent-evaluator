@@ -1,7 +1,11 @@
-
 from argparse import ArgumentParser
 from uuid import uuid4
-from bot.server import start_uvicorn_server_in_thread, quick_run_uvicorn_server, start_ngrok_server, setup_ngrok
+from bot.server import (
+    start_uvicorn_server_in_thread,
+    start_ngrok_server,
+    setup_ngrok,
+    indefinitely_serve
+)
 from bot.analyzer import save_bug_report
 from bot.caller import Caller
 from bot.config import validate_config
@@ -44,25 +48,28 @@ def run_simulation(scenario_name: ScenarioNamesType) -> None:
 
     print(f"Transcript: {transcript_paths['md']}")
     print(f"Bug report: {report_paths['md']}")
-    
 
-def serve_servers(host: str, port: int):
+
+def serve_servers(host: str, port: int, pause: bool = False):
     setup_ngrok(credentials["ngrok"]["auth_token"])
     tunnel = start_ngrok_server(port=port)
-    server, server_thread = start_uvicorn_server_in_thread(host, port)
-    return tunnel, server, server_thread
-
-
+    server, thread = start_uvicorn_server_in_thread(host, port)
+    if pause: 
+        indefinitely_serve()
+    return tunnel, server, thread
 
 
 def run_server_and_call(host: str, port: int = 8000) -> None:
     validate_config(require_twilio=True)
-    tunnel, server, server_thread = serve_servers(host, port)
+    tunnel, server, thread = serve_servers(host, port)
     try:
         place_call(tunnel.public_url)
+    except KeyboardInterrupt:
+        print("Stopping server after keyboard interrupt...")
     finally:
-        server.should_exit = True
-        server_thread.join(timeout=5)
+        indefinitely_serve()
+        
+            
 
 
 def place_call(http: str = None) -> None:
@@ -130,7 +137,7 @@ def main() -> None:
     if args.command == "simulate":
         run_simulation(args.scenario)
     elif args.command == "serve":
-        serve_servers(args.host, args.port)
+        serve_servers(args.host, args.port, True)
     elif args.command == "call":
         place_call()
     elif args.command == "run":
