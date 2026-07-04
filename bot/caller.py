@@ -94,3 +94,14 @@ class Caller:
         self._status_watcher.start()
         log_info(f"Call started: {call.sid}")
         return call.sid
+
+def place_call(http: str = None) -> None:
+    call_ended_event.clear()
+    def on_call_ended(call_sid: str, status: str) -> None:
+        print(f"Received call.ended event: {call_sid} status={status}")
+    call_signal.once("call.ended", on_call_ended)
+    caller = Caller()
+    call_sid = caller.make_call(http)
+    print(f"Waiting for call to end for {call_sid}...")
+    call_ended_event.wait()
+    print(f"Call process ending after call.ended for {call_sid}")

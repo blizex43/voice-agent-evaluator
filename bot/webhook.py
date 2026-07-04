@@ -135,7 +135,7 @@ async def voice_webhook(request: Request):
     reply_text, hang_up = _resolve_speech_text_and_hangup(reply)
     await save_history_to_file_async(call_sid, conversation)
     voice_response = append_reply_to_voice_response(reply=reply_text, hang_up=hang_up, voice_index=scenario.patient.voice_index if scenario is not None else None)
-    log_info(f"reply={reply!r} reply_text={reply_text!r} hang_up={hang_up}")
+    log_info(f"input={user_input} reply={reply!r} reply_text={reply_text!r} hang_up={hang_up}")
     return Response(
         content=voice_response.to_xml(), media_type=MEDIA_TYPE, status_code=200
     )
@@ -179,5 +179,5 @@ async def recording_status_webhook(request: Request):
             )
     if call_status in call_statuses:
             conversations.pop(call_sid, None)
-            
+
     return Response(content=EMPTY_TWIML, media_type=MEDIA_TYPE)

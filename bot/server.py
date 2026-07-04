@@ -2,6 +2,7 @@ import threading
 import uvicorn
 import time
 from pyngrok import ngrok
+from enums.collections import credentials
 def start_uvicorn_server_in_thread(
     host: str, port: int
 ) -> tuple[uvicorn.Server, threading.Thread]:
@@ -25,6 +26,15 @@ def setup_ngrok(auth: str) -> None:
 def start_ngrok_server(port: int = 8000):
     tunnel = ngrok.connect(port)
     return tunnel
+
 def indefinitely_serve():
     while True:
         time.sleep(1)
+
+def serve_servers(host: str, port: int, pause: bool = False):
+    setup_ngrok(credentials["ngrok"]["auth_token"])
+    tunnel = start_ngrok_server(port=port)
+    server, thread = start_uvicorn_server_in_thread(host, port)
+    if pause: 
+        indefinitely_serve()
+    return tunnel, server, thread
