@@ -68,12 +68,13 @@ def detect_bugs(messages: List[Dict[str, str]]) -> List[Dict[str, str]]:
     return bugs
 
 
-def report_paths() -> Dict[str, Path]:
+def report_paths(index: int = None) -> Dict[str, Path]:
     ensure_output_dir(REPORT_DIR)
     return get_incremented_file_dirs(
         parent_dir=REPORT_DIR,
         extensions={FILE_EXT_JSON: FILE_EXT_JSON, FILE_EXT_MD: FILE_EXT_MD},
         prefix=FILE_PREFIX_REPORT,
+        index=index
     )
 
 
@@ -93,9 +94,9 @@ def _write_json(path: Path, payload: dict) -> None:
         log_and_raise(exc, f"Failed to write JSON file {path}")
 
 
-def save_bug_report(session_id: str, messages: List[Dict[str, str]]) -> Dict[str, Path]:
+def save_bug_report(session_id: str, messages: List[Dict[str, str]], conversation_id: int = None) -> Dict[str, Path]:
     bugs = detect_bugs(messages)
-    paths = report_paths()
+    paths = report_paths(conversation_id)
     payload = {
         "session_id": session_id,
         "updated_at": datetime.now(timezone.utc).isoformat(),

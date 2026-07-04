@@ -38,9 +38,9 @@ def run_simulation(scenario_name: ScenarioNamesType) -> None:
 
     conversation.run()
     transcript_paths = save_transcript(
-        session_id, conversation.history, conversation.metadata
+        session_id, conversation.history, conversation.metadata, conversation.id
     )
-    report_paths = save_bug_report(session_id, conversation.history)
+    report_paths = save_bug_report(session_id, conversation.history, conversation.id)
 
     print(f"Transcript: {transcript_paths['md']}")
     print(f"Bug report: {report_paths['md']}")

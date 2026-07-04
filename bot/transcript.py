@@ -28,12 +28,13 @@ def serialize_metadata(metadata: Dict[str, Any]) -> Dict[str, Any]:
     return serialized
 
 
-def transcript_paths() -> Dict[str, Path]:
+def transcript_paths(index: int = None) -> Dict[str, Path]:
     ensure_output_dir(TRANSCRIPT_DIR)
     return get_incremented_file_dirs(
         parent_dir=TRANSCRIPT_DIR,
         extensions={FILE_EXT_JSON: FILE_EXT_JSON, FILE_EXT_MD: FILE_EXT_MD},
         prefix=FILE_PREFIX_TRANSCRIPT,
+        index=index,
     )
 
 
@@ -55,8 +56,9 @@ def save_transcript(
     session_id: str,
     messages: List[Dict[str, str]],
     metadata: Dict[str, Any] | None = None,
+    conversation_id: int = None
 ) -> Dict[str, Path]:
-    paths = transcript_paths()
+    paths = transcript_paths(conversation_id)
     payload = {
         "session_id": session_id,
         "updated_at": datetime.now(timezone.utc).isoformat(),

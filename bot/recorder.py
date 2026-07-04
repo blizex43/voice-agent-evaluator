@@ -15,10 +15,11 @@ from enums.strings import (
     FILE_PREFIX_RECORDING,
     TWILIO_API_TIMEOUT_SECONDS,
 )
+from .conversation import Conversation
 from util.paths import ensure_output_dir, get_incremented_file_dirs
 
 
-def recording_paths() -> Dict[str, Path]:
+def recording_paths(index: int = None) -> Dict[str, Path]:
     ensure_output_dir(RECORDING_DIR)
     return get_incremented_file_dirs(
         parent_dir=RECORDING_DIR,
@@ -28,6 +29,7 @@ def recording_paths() -> Dict[str, Path]:
             "audio": FILE_EXT_MP3,
         },
         prefix=FILE_PREFIX_RECORDING,
+        index=index
     )
 
 
@@ -51,11 +53,11 @@ def _write_audio(path: Path, content: bytes) -> None:
         log_and_raise(exc, f"Failed to write audio file {path}")
 
 
-def save_recording_metadata(form: Dict[str, str]) -> Dict[str, Path]:
+def save_recording_metadata(form: Dict[str, str], conversation: Conversation) -> Dict[str, Path]:
     recording_sid = (
         form.get("RecordingSid") or form.get("CallSid") or DEFAULT_RECORDING_SID
     )
-    paths = recording_paths()
+    paths = recording_paths(conversation.id)
     payload = {
         "updated_at": datetime.now(timezone.utc).isoformat(),
         "call_sid": form.get("CallSid"),
@@ -82,7 +84,7 @@ def save_recording_metadata(form: Dict[str, str]) -> Dict[str, Path]:
     return paths
 
 
-def download_recording_audio(form: Dict[str, str]) -> Path | None:
+def download_recording_audio(form: Dict[str, str], conversation: Conversation) -> Path | None:
     recording_url = form.get("RecordingUrl")
     recording_sid = form.get("RecordingSid")
     account_sid = credentials["twilio"]["account_sid"]
@@ -96,7 +98,7 @@ def download_recording_audio(form: Dict[str, str]) -> Path | None:
         if recording_url.endswith(f".{FILE_EXT_MP3}")
         else f"{recording_url}.{FILE_EXT_MP3}"
     )
-    audio_path = recording_paths()["audio"]
+    audio_path = recording_paths(conversation.id)["audio"]
     try:
         response = requests.get(
             audio_url,

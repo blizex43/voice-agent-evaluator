@@ -1,6 +1,6 @@
 from classes.dataclasses import Scenario, Patient
 from structs.prompts import ScenarioLibraryType, ScenarioNamesType
-from enums.prompts import patient_autofill_enum
+from enums.lore_books import patient_autofill_enum
 from typing import Union, Literal
 import random
 

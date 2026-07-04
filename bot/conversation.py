@@ -2,13 +2,15 @@ from typing import Any, Dict, List, Optional
 from .llm import LLMClient
 from enums.logger import log_info
 from enums.prompts import initial_sys_prompt, agent_title, user_title
-from structs.custom import Message, Maybe
+from enums.strings import FILE_PREFIX_REPORT
+from structs.custom import Message
 from enums.model import max_history
+from enums.dir import REPORT_DIR
+from util.paths import find_next_index
+import re
 
 
-def _build_system_prompt(
-    scenario: List[Message], role: str, user_role: str
-) -> str:
+def _build_system_prompt(scenario: List[Message], role: str, user_role: str) -> str:
     """Compose the system prompt for the LLM given the scenario and role labels."""
     return (
         f"{initial_sys_prompt}\n"
@@ -33,9 +35,13 @@ class Conversation:
         self.role = agent_title
         self.user_role = user_title
         self.turn_index = 0
+        self.id = find_next_index(
+            FILE_PREFIX_REPORT, REPORT_DIR, re.compile(rf"^{FILE_PREFIX_REPORT}(\d+)$")
+        )
         # LLM client (Groq)
         self.llm = LLMClient()
         self.system_prompt = _build_system_prompt(scenario, self.role, self.user_role)
+        print(self.id)
 
     def add_message(self, role: str, content: str):
         self.history.append({"role": role, "content": content})

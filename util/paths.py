@@ -17,18 +17,21 @@ def get_incremented_filename(name: str, parent_dir: Path) -> Path:
     """Return a new zero-padded numbered folder under `parent_dir`."""
     pattern = re.compile(rf"^{name}(\d+)$")
     next_num = find_next_index(name, parent_dir, pattern)
-    print(name)
-    print(parent_dir)
-    return parent_dir / f"{name}{next_num:02d}"
+    return append_index_to_path(parent_dir, name, next_num)
+
+
+def append_index_to_path(dir: Path, name: str, index: int) -> Path:
+    return dir / f"{name}{index:02d}"
 
 
 def get_incremented_file_dirs(
     parent_dir: Path,
     extensions: dict[str, str],
     prefix: str = FILE_PREFIX_REPORT,
+    index: int = -1,
 ) -> dict[str, Path]:
     """Return a mapping of abbreviation -> file path using `prefix` + `name` + numeric folder."""
-    base = get_incremented_filename(f"{prefix}", parent_dir)
+    base = append_index_to_path(parent_dir, prefix, index) if index and index != -1 else get_incremented_filename(f"{prefix}", parent_dir)
     return {
         abbr: base.with_suffix(f".{ext}") for abbr, ext in extensions.items()
     }

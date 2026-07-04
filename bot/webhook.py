@@ -87,8 +87,8 @@ def get_generated_conversation(
 
 
 async def save_history_to_file_async(sid: str, conversation: Conversation) -> None:
-    save_transcript(sid, conversation.history, conversation.metadata)
-    save_bug_report(sid, conversation.history)
+    save_transcript(sid, conversation.history, conversation.metadata, conversation.id)
+    save_bug_report(sid, conversation.history, conversation.id)
 
 
 def append_reply_to_voice_response(
@@ -146,15 +146,14 @@ async def call_status_webhook(request: Request):
     form = await parse_twilio_form(request)
     call_sid = form.get("CallSid", DEFAULT_CALL_SID)
     call_status = form.get("CallStatus", "")
-    conversation = conversations.get(call_sid) 
+    conversation = conversations.get(call_sid) or get_generated_conversation(
+        call_sid, "random"
+    )
 
     if conversation is not None:
         conversation.metadata["call_status"] = call_status
-        save_transcript(call_sid, conversation.history, conversation.metadata)
-        save_bug_report(call_sid, conversation.history)
-
-        if call_status in call_statuses:
-            conversations.pop(call_sid, None)
+        save_transcript(call_sid, conversation.history, conversation.metadata, conversation.id)
+        save_bug_report(call_sid, conversation.history, conversation.id)
 
     return Response(content=EMPTY_TWIML, media_type=MEDIA_TYPE)
 
@@ -162,18 +161,23 @@ async def call_status_webhook(request: Request):
 @app.post(WEBHOOK_RECORDING_STATUS_PATH)
 async def recording_status_webhook(request: Request):
     form = await parse_twilio_form(request)
-    save_recording_metadata(form)
-
+    call_sid = form.get("CallSid", DEFAULT_CALL_SID)
+    call_status = form.get("CallStatus", "")
+    conversation = conversations.get(call_sid) or get_generated_conversation(
+        call_sid, "random"
+    ) 
+    save_recording_metadata(form, conversation)
     if form.get("RecordingStatus") == RECORDING_STATUS_COMPLETED:
         try:
-            download_recording_audio(form)
+            download_recording_audio(form, conversation)
         except Exception as exc:
             form["download_error"] = str(exc)
-            call_sid = form.get("CallSid", "None")
-            save_recording_metadata(form)
+            save_recording_metadata(form, conversation)
             log_and_raise(
                 exc,
                 f"Failed to download recording audio! Download Error: {form['download_error']} SID: {call_sid}",
             )
-
+    if call_status in call_statuses:
+            conversations.pop(call_sid, None)
+            
     return Response(content=EMPTY_TWIML, media_type=MEDIA_TYPE)
