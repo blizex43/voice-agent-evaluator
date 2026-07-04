@@ -16,6 +16,7 @@ class Caller:
         )
         self.from_number = credentials["twilio"]["from_phone_number"]
         self.to_number = credentials["twilio"]["to_phone_number"]
+        print(self.to_number)
         self.recent_call = None
         self._status_watcher = None
         self._stop_watcher = threading.Event()

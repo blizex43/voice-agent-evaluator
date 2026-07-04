@@ -8,7 +8,7 @@ from structs.parser import (
     ParserDefaultReturnType,
     ParserDictNecessitiesType,
 )
-
+from enums.prompts import blacklisted_phrases
 parser_functions: dict[ParserFunctionNamesType, Callable] = {}
 
 
@@ -106,6 +106,11 @@ def resolve_parser_reply(input: str) -> tuple[str, bool]:
         return inline, matched_name == "parser_end_call"
 
     return input, False
+
+def is_blacklisted_input(text: str) -> bool:
+    lowered_text = text.lower()
+    return any(phrase.lower() in lowered_text for phrase in blacklisted_phrases)
+
 
 
 def parse_response_for_matches(

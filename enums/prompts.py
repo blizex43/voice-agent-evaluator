@@ -63,9 +63,11 @@ Example:
 
 Every response MUST contain exactly one pair of <say>...</say> tags. Every message must always have both the prefix <say> and the suffix </say>.
 
+If the receptionist says "one moment" or "1 moment", don't end the call, they are preparing another response.
 {parser_function_info}
 """
 
 agent_title = "assistant"
 user_title = "user"
 
+blacklisted_phrases = ("be recorded for quality and training purposes", "1 moment", "one moment")

@@ -22,7 +22,7 @@ from enums.strings import (
     WEBHOOK_VOICE_PATH,
 )
 from .listeners import parser_signal
-from .parser import resolve_parser_reply
+from .parser import resolve_parser_reply, is_blacklisted_input
 from typing import Literal
 from structs.parser import ParserFunctionNamesType
 from structs.prompts import ScenarioNamesType, Scenario
@@ -94,8 +94,8 @@ async def save_history_to_file_async(sid: str, conversation: Conversation) -> No
 def append_reply_to_voice_response(
     reply: str,
     voice_index: int = 4,
-    timeout: int | Literal["auto"] = 60,
-    speech_timeout: int | Literal["auto"] = 0.8,
+    timeout: int | Literal["auto"] = 30,
+    speech_timeout: int | Literal["auto"] = 1.2,
     language_index: int = 0,
     hang_up: bool = False,
 ) -> VoiceResponse:
@@ -115,6 +115,10 @@ def append_reply_to_voice_response(
         voice_response.hangup()
     return voice_response
 
+def send_empty_response() -> Response:
+    return Response(content=append_reply_to_voice_response("").to_xml(), media_type=MEDIA_TYPE, status_code=200)
+
+
 
 @app.post(WEBHOOK_VOICE_PATH)
 async def voice_webhook(request: Request):
@@ -128,11 +132,13 @@ async def voice_webhook(request: Request):
         call_sid, "random"
     )
     scenario: Maybe[Scenario] = conversation.metadata.get("scenario")
-    if ((not DEFAULT_USER_INPUT) and (not user_input) and (conversation.metadata.get("call_status") == None)):
-        return Response(content=append_reply_to_voice_response("").to_xml(), media_type=MEDIA_TYPE, status_code=200)
+    if (((not DEFAULT_USER_INPUT) and (not user_input) and (conversation.metadata.get("call_status") == None)) or is_blacklisted_input(user_input)):
+        return send_empty_response()
 
     reply = await conversation.handle_user_message(user_input or DEFAULT_USER_INPUT)
     reply_text, hang_up = _resolve_speech_text_and_hangup(reply)
+    if not hang_up and not user_input and conversation.metadata.get("call_status") != None:
+        hang_up = True
     await save_history_to_file_async(call_sid, conversation)
     voice_response = append_reply_to_voice_response(reply=reply_text, hang_up=hang_up, voice_index=scenario.patient.voice_index if scenario is not None else None)
     log_info(f"input={user_input} reply={reply!r} reply_text={reply_text!r} hang_up={hang_up}")

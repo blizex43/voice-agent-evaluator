@@ -35,7 +35,6 @@ EMPTY_TWIML = "<Response />"
 DEFAULT_CALL_SID = "local-test-call"
 DEFAULT_RECORDING_SID = "unknown-recording"
 DEFAULT_USER_INPUT = None
-
 SIMULATION_SESSION_PREFIX = "simulation-"
 
 # ---------------------------------------------------------------------------

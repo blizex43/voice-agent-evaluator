@@ -1,4 +1,6 @@
 from structs.prompts import PatientAutofillType, PatientInstructionsType
+
+
 patient_instructions_enum: PatientInstructionsType = {
     "default": 
         """
