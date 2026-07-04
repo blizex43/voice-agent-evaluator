@@ -1,8 +1,6 @@
-from dataclasses import dataclass
 from typing import Iterable
 from enums.collections import credentials, urls
 from classes.dataclasses import ConfigCheck
-
 COMMON_KEYS = [
     ConfigCheck("GROQ_API_KEY", credentials["groq"]["api_key"]),
 ]
@@ -12,7 +10,8 @@ TWILIO_KEYS = [
     ConfigCheck("TWILIO_AUTH_TOKEN", credentials["twilio"]["auth_token"]),
     ConfigCheck("TWILIO_PHONE_NUMBER", credentials["twilio"]["from_phone_number"]),
     ConfigCheck("TEST_NUMBER", credentials["twilio"]["to_phone_number"]),
-    ConfigCheck("ENDPOINT_URL", urls["endpoint"]),
+    ConfigCheck("NGROK_BACKUP_ENDPOINT_URL", urls["endpoint"]),
+    ConfigCheck("NGROK_AUTH_TOKEN", credentials["ngrok"]["auth_token"])
 ]
 
 

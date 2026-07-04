@@ -6,7 +6,7 @@ Python voice-bot harness for testing a healthcare AI receptionist over Twilio.
 
 1. Copy `.env.example` to `.env`.
 2. Fill in Groq and Twilio credentials.
-3. Set `ENDPOINT_URL` to your public ngrok `/voice` URL.
+3. Set `ENDPNGROK_BACKUP_ENDPOINT_URLOINT_URL` to your public ngrok `/voice` URL.
 
 ## Commands
 

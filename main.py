@@ -1,7 +1,7 @@
+
 from argparse import ArgumentParser
 from uuid import uuid4
-
-import uvicorn
+from bot.server import start_uvicorn_server_in_thread, quick_run_uvicorn_server, start_ngrok_server, setup_ngrok
 from bot.analyzer import save_bug_report
 from bot.caller import Caller
 from bot.config import validate_config
@@ -12,7 +12,7 @@ from enums.dir import OUTPUT_DIR, RECORDING_DIR, REPORT_DIR, TRANSCRIPT_DIR
 from enums.scenarios import scenario_names, get_scenario, scenario_to_messages
 from enums.strings import SIMULATION_SESSION_PREFIX
 from structs.prompts import ScenarioNamesType
-
+from enums.collections import credentials
 
 def ensure_output_dirs() -> None:
     for directory in [OUTPUT_DIR, RECORDING_DIR, REPORT_DIR, TRANSCRIPT_DIR]:
@@ -44,17 +44,29 @@ def run_simulation(scenario_name: ScenarioNamesType) -> None:
 
     print(f"Transcript: {transcript_paths['md']}")
     print(f"Bug report: {report_paths['md']}")
+    
+
+def serve_servers(host: str, port: int):
+    setup_ngrok(credentials["ngrok"]["auth_token"])
+    tunnel = start_ngrok_server(port=port)
+    server, server_thread = start_uvicorn_server_in_thread(host, port)
+    return tunnel, server, server_thread
 
 
-def run_server(host: str, port: int) -> None:
-    validate_config(require_twilio=False)
-    ensure_output_dirs()
-    uvicorn.run("bot.webhook:app", host=host, port=port, reload=False)
 
 
-def place_call() -> None:
+def run_server_and_call(host: str, port: int = 8000) -> None:
     validate_config(require_twilio=True)
-    ensure_output_dirs()
+    tunnel, server, server_thread = serve_servers(host, port)
+    try:
+        place_call(tunnel.public_url)
+    finally:
+        server.should_exit = True
+        server_thread.join(timeout=5)
+
+
+def place_call(http: str = None) -> None:
+    validate_config(require_twilio=True)
 
     call_ended_event.clear()
 
@@ -64,7 +76,7 @@ def place_call() -> None:
     call_signal.once("call.ended", on_call_ended)
 
     caller = Caller()
-    call_sid = caller.make_call()
+    call_sid = caller.make_call(http)
     print(f"Waiting for call to end for {call_sid}...")
     call_ended_event.wait()
     print(f"Call process ending after call.ended for {call_sid}")
@@ -91,6 +103,13 @@ def build_parser() -> ArgumentParser:
     serve.add_argument("--host", default="0.0.0.0")
     serve.add_argument("--port", type=int, default=8000)
 
+    run = subparsers.add_parser(
+        "run",
+        help="Start the webhook server and place a Twilio outbound call",
+    )
+    run.add_argument("--host", default="0.0.0.0")
+    run.add_argument("--port", type=int, default=8000)
+
     subparsers.add_parser("call", help="Place a Twilio outbound call")
 
     validate = subparsers.add_parser("validate", help="Check required environment")
@@ -98,22 +117,24 @@ def build_parser() -> ArgumentParser:
     validate.add_argument(
         "--twilio",
         action="store_true",
-        help="Also require Twilio and ENDPOINT_URL settings",
+        help="Also require Twilio and NGROK_BACKUP_ENDPOINT_URL settings",
     )
 
     return parser
 
 
 def main() -> None:
+    ensure_output_dirs()
     parser = build_parser()
     args = parser.parse_args()
-
     if args.command == "simulate":
         run_simulation(args.scenario)
     elif args.command == "serve":
-        run_server(args.host, args.port)
+        serve_servers(args.host, args.port)
     elif args.command == "call":
         place_call()
+    elif args.command == "run":
+        run_server_and_call(args.host, args.port)
     elif args.command == "validate":
         validate_environment(require_twilio=args.twilio)
     else:

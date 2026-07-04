@@ -58,17 +58,17 @@ class Caller:
 
             time.sleep(POLL_INTERVAL_SECONDS)
 
-    def _build_callback_urls(self) -> dict[str, str]:
-        base_url: str = urls["endpoint"]
+    def _build_callback_urls(self, addr: str) -> dict[str, str]:
+        if not addr:
+            addr = urls["endpoint"]
         return {
-            "voice": f"{base_url}/voice",
-            "call_status": f"{base_url}/call-status",
-            "recording_status": f"{base_url}/recording-status",
+            "voice": f"{addr}/voice",
+            "call_status": f"{addr}/call-status",
+            "recording_status": f"{addr}/recording-status",
         }
 
-    def make_call(self):
-        urls_map = self._build_callback_urls()
-
+    def make_call(self, addr: str):
+        urls_map = self._build_callback_urls(addr)
         call = self.client.calls.create(
             to=self.to_number,
             from_=self.from_number,
