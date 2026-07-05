@@ -41,7 +41,6 @@ class Conversation:
         # LLM client (Groq)
         self.llm = LLMClient()
         self.system_prompt = _build_system_prompt(scenario, self.role, self.user_role)
-        print(self.id)
 
     def add_message(self, role: str, content: str):
         self.history.append({"role": role, "content": content})
