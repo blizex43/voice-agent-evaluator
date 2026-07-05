@@ -7,7 +7,6 @@ from bot.caller import place_call
 from bot.config import validate_config
 from enums.dir import OUTPUT_DIR, RECORDING_DIR, REPORT_DIR, TRANSCRIPT_DIR
 from util.cmds import build_parser
-from bot.simulate import run_simulation
 def ensure_output_dirs() -> None:
     for directory in [OUTPUT_DIR, RECORDING_DIR, REPORT_DIR, TRANSCRIPT_DIR]:
         directory.mkdir(parents=True, exist_ok=True)
@@ -31,9 +30,7 @@ def main() -> None:
     ensure_output_dirs()
     parser = build_parser()
     args = parser.parse_args()
-    if args.command == "simulate":
-        run_simulation(args.scenario)
-    elif args.command == "serve":
+    if args.command == "serve":
         serve_servers(args.host, args.port, True)
     elif args.command == "call":
         place_call()
