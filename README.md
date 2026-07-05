@@ -31,5 +31,3 @@ output/transcripts/
 output/reports/
 output/recordings/
 ```
-
-The simulation mode is useful for local debugging without placing a live call, while `serve` and `run` are intended for the Twilio webhook flow.
