@@ -20,6 +20,7 @@ from util.paths import ensure_output_dir, get_incremented_file_dirs
 
 
 def recording_paths(index: int = None) -> Dict[str, Path]:
+    """Build the output file paths for the next recording artifact."""
     ensure_output_dir(RECORDING_DIR)
     return get_incremented_file_dirs(
         parent_dir=RECORDING_DIR,
@@ -29,7 +30,7 @@ def recording_paths(index: int = None) -> Dict[str, Path]:
             "audio": FILE_EXT_MP3,
         },
         prefix=FILE_PREFIX_RECORDING,
-        index=index
+        index=index,
     )
 
 
@@ -46,6 +47,7 @@ def _write_json(path: Path, payload: dict) -> None:
     except OSError as exc:
         log_and_raise(exc, f"Failed to write JSON file {path}")
 
+
 def _write_audio(path: Path, content: bytes) -> None:
     try:
         path.write_bytes(content)
@@ -53,7 +55,10 @@ def _write_audio(path: Path, content: bytes) -> None:
         log_and_raise(exc, f"Failed to write audio file {path}")
 
 
-def save_recording_metadata(form: Dict[str, str], conversation: Conversation) -> Dict[str, Path]:
+def save_recording_metadata(
+    form: Dict[str, str], conversation: Conversation
+) -> Dict[str, Path]:
+    """Save Twilio recording metadata as both JSON and Markdown files."""
     recording_sid = (
         form.get("RecordingSid") or form.get("CallSid") or DEFAULT_RECORDING_SID
     )
@@ -84,7 +89,10 @@ def save_recording_metadata(form: Dict[str, str], conversation: Conversation) ->
     return paths
 
 
-def download_recording_audio(form: Dict[str, str], conversation: Conversation) -> Path | None:
+def download_recording_audio(
+    form: Dict[str, str], conversation: Conversation
+) -> Path | None:
+    """Download the completed Twilio recording audio and store it on disk."""
     recording_url = form.get("RecordingUrl")
     recording_sid = form.get("RecordingSid")
     account_sid = credentials["twilio"]["account_sid"]

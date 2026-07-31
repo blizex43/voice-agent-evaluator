@@ -8,4 +8,3 @@ parser_function_info: ParserDictValue = {
 		"suffix": "</say>"
 	}
 }
-

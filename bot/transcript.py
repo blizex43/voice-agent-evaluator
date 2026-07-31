@@ -15,10 +15,12 @@ from util.paths import ensure_output_dir, get_incremented_file_dirs
 
 
 def utc_timestamp() -> str:
+    """Return the current time formatted for transcript metadata."""
     return datetime.now(timezone.utc).strftime(TIMESTAMP_FORMAT)
 
 
 def serialize_metadata(metadata: Dict[str, Any]) -> Dict[str, Any]:
+    """Convert metadata into a JSON-serializable dictionary for transcript output."""
     serialized = {}
     for key, value in metadata.items():
         if is_dataclass(value):
@@ -29,6 +31,7 @@ def serialize_metadata(metadata: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def transcript_paths(index: int = None) -> Dict[str, Path]:
+    """Build the output file paths for the next transcript artifact."""
     ensure_output_dir(TRANSCRIPT_DIR)
     return get_incremented_file_dirs(
         parent_dir=TRANSCRIPT_DIR,
@@ -56,8 +59,9 @@ def save_transcript(
     session_id: str,
     messages: List[Dict[str, str]],
     metadata: Dict[str, Any] | None = None,
-    conversation_id: int = None
+    conversation_id: int = None,
 ) -> Dict[str, Path]:
+    """Write the conversation history to both JSON and Markdown transcript files."""
     paths = transcript_paths(conversation_id)
     payload = {
         "session_id": session_id,
@@ -77,7 +81,12 @@ def save_transcript(
 
     for message in messages:
         role = message.get("role", "unknown").title()
-        content = message.get("content", "").strip().replace("<say>", "").replace("</say>", "")
+        content = (
+            message.get("content", "")
+            .strip()
+            .replace("<say>", "")
+            .replace("</say>", "")
+        )
         if content:
             lines.extend([f"**{role}:** {content}", ""])
 

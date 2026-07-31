@@ -146,7 +146,7 @@ patient_autofill_enum: PatientAutofillType = {
         "personality":"angry and impatient",
         "interruption_level":0.5,
 		"instructions": patient_instructions_enum["angry"],
-		"voice_index": 4,
+		"voice_index": 5,
 	},
 	"appointment": {
 		"name":"Maya Patel",
@@ -155,7 +155,7 @@ patient_autofill_enum: PatientAutofillType = {
         "personality":"organized and direct",
         "interruption_level":0.0,
 		"instructions": patient_instructions_enum["appointment"],
-		"voice_index": 0,
+		"voice_index": 1,
 	},
 	"insurance": {
 		"name":"Chris Morgan",
@@ -164,7 +164,7 @@ patient_autofill_enum: PatientAutofillType = {
         "personality":"confused and detail-heavy",
         "interruption_level":0.2,
 		"instructions": patient_instructions_enum["insurance"],
-		"voice_index": 1,
+		"voice_index": 2,
 	},
 	"urgent": {
 		"name":"Robert Kim",
@@ -173,6 +173,6 @@ patient_autofill_enum: PatientAutofillType = {
         "personality":"minimizing but worried",
         "interruption_level":0.1,
 		"instructions": patient_instructions_enum["urgent"],
-		"voice_index": 1,
+		"voice_index": 4,
 	},
 }

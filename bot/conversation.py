@@ -11,7 +11,7 @@ import re
 
 
 def _build_system_prompt(scenario: List[Message], role: str, user_role: str) -> str:
-    """Compose the system prompt for the LLM given the scenario and role labels."""
+    """Compose the system prompt for the LLM using the scenario and role labels."""
     return (
         f"{initial_sys_prompt}\n"
         f"Your Role is {role}\n"
@@ -21,6 +21,7 @@ def _build_system_prompt(scenario: List[Message], role: str, user_role: str) -> 
 
 
 class Conversation:
+    """Manage a single conversation session and ask the LLM for the next assistant reply."""
 
     def __init__(
         self,
@@ -43,9 +44,11 @@ class Conversation:
         self.system_prompt = _build_system_prompt(scenario, self.role, self.user_role)
 
     def add_message(self, role: str, content: str):
+        """Append a message to the conversation history for later transcript generation."""
         self.history.append({"role": role, "content": content})
 
     def next_user_message(self) -> Optional[str]:
+        """Return the next scripted patient message from the scenario."""
         if self.turn_index >= len(self.scenario):
             return None
 
@@ -55,9 +58,7 @@ class Conversation:
         return msg["content"]
 
     async def agent_reply(self, user_message: str) -> str:
-        """
-        REAL LLM CALL (Groq)
-        """
+        """Send the current conversation context to the LLM and return the assistant reply."""
         messages = [
             {"role": "system", "content": self.system_prompt},
         ]
@@ -70,12 +71,14 @@ class Conversation:
         return await self.llm.chat(messages)
 
     async def handle_user_message(self, user_message: str) -> str:
+        """Generate and store the assistant reply for one incoming user message."""
         agent_msg = await self.agent_reply(user_message)
         self.add_message("user", user_message)
         self.add_message("assistant", agent_msg)
         return agent_msg
 
     def run(self):
+        """Process each scenario message from start to finish using the LLM."""
         log_info("=== Conversation Start ===")
 
         while True:

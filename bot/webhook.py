@@ -21,13 +21,14 @@ from enums.strings import (
     WEBHOOK_RECORDING_STATUS_PATH,
     WEBHOOK_VOICE_PATH,
 )
-from .listeners import parser_signal
+from .listeners import parser_signal, recording_saved_event
 from .parser import resolve_parser_reply, is_blacklisted_input
 from typing import Literal
 from structs.parser import ParserFunctionNamesType
 from structs.prompts import ScenarioNamesType, Scenario
 from structs.custom import Maybe
 from twilio.twiml.voice_response import VoiceResponse
+from threading import Timer
 
 app = FastAPI()
 conversations: dict[str, Conversation] = {}
@@ -36,6 +37,7 @@ caller_instance = Caller()
 
 @app.get("/")
 async def root() -> dict[str, str]:
+    """Return basic service status and webhook endpoint information."""
     return {
         "status": "ok",
         "service": SERVICE_NAME,
@@ -49,6 +51,7 @@ async def root() -> dict[str, str]:
 
 @app.get(WEBHOOK_HEALTH_PATH)
 async def health() -> dict[str, str]:
+    """Provide a simple health check endpoint for the service."""
     return {"status": "ok"}
 
 
@@ -62,6 +65,7 @@ def handle_parser_signal_on_receive(
 
 
 async def parse_twilio_form(request: Request) -> dict[str, str]:
+    """Parse the form-encoded payload that Twilio sends to the webhook."""
     body = (await request.body()).decode("utf-8")
     parsed = parse_qs(body)
     return {key: values[0] for key, values in parsed.items() if values}
@@ -76,6 +80,7 @@ def _resolve_speech_text_and_hangup(reply: str) -> tuple[str, bool]:
 def get_generated_conversation(
     sid: str, scenario_type: ScenarioNamesType | Literal["random"] = "random"
 ) -> Conversation:
+    """Create or retrieve the active conversation object for a given call SID."""
     scenario = get_scenario(scenario_type)
     conversation = Conversation(
         scenario_to_messages(scenario),
@@ -87,6 +92,7 @@ def get_generated_conversation(
 
 
 async def save_history_to_file_async(sid: str, conversation: Conversation) -> None:
+    """Persist the current conversation history as a transcript and bug report."""
     save_transcript(sid, conversation.history, conversation.metadata, conversation.id)
     save_bug_report(sid, conversation.history, conversation.id)
 
@@ -99,6 +105,7 @@ def append_reply_to_voice_response(
     language_index: int = 0,
     hang_up: bool = False,
 ) -> VoiceResponse:
+    """Build a TwiML response that speaks the reply and optionally collects more speech."""
     voice_response = VoiceResponse()
     voice_response.say(
         reply, voice=voice_choices[voice_index], language=languages[language_index]
@@ -115,16 +122,19 @@ def append_reply_to_voice_response(
         voice_response.hangup()
     return voice_response
 
-def send_empty_response() -> Response:
-    return Response(content=append_reply_to_voice_response("").to_xml(), media_type=MEDIA_TYPE, status_code=200)
 
+def send_empty_response() -> Response:
+    """Return a minimal empty TwiML response when the input should be ignored."""
+    return Response(
+        content=append_reply_to_voice_response("").to_xml(),
+        media_type=MEDIA_TYPE,
+        status_code=200,
+    )
 
 
 @app.post(WEBHOOK_VOICE_PATH)
 async def voice_webhook(request: Request):
-    """
-    Twilio will hit this endpoint during a call.
-    """
+    """Handle Twilio voice events and produce the next spoken reply for the caller."""
     form = await parse_twilio_form(request)
     call_sid = form.get("CallSid", DEFAULT_CALL_SID)
     user_input = form.get("SpeechResult", "")
@@ -132,16 +142,30 @@ async def voice_webhook(request: Request):
         call_sid, "random"
     )
     scenario: Maybe[Scenario] = conversation.metadata.get("scenario")
-    if (((not DEFAULT_USER_INPUT) and (not user_input) and (conversation.metadata.get("call_status") == None)) or is_blacklisted_input(user_input)):
+    if (
+        (not DEFAULT_USER_INPUT)
+        and (not user_input)
+        and (conversation.metadata.get("call_status") == None)
+    ) or is_blacklisted_input(user_input):
         return send_empty_response()
 
     reply = await conversation.handle_user_message(user_input or DEFAULT_USER_INPUT)
     reply_text, hang_up = _resolve_speech_text_and_hangup(reply)
-    if not hang_up and not user_input and conversation.metadata.get("call_status") != None:
+    if (
+        not hang_up
+        and not user_input
+        and conversation.metadata.get("call_status") != None
+    ):
         hang_up = True
     await save_history_to_file_async(call_sid, conversation)
-    voice_response = append_reply_to_voice_response(reply=reply_text, hang_up=hang_up, voice_index=scenario.patient.voice_index if scenario is not None else None)
-    log_info(f"input={user_input} reply={reply!r} reply_text={reply_text!r} hang_up={hang_up}")
+    voice_response = append_reply_to_voice_response(
+        reply=reply_text,
+        hang_up=hang_up,
+        voice_index=scenario.patient.voice_index if scenario is not None else None,
+    )
+    log_info(
+        f"input={user_input} reply={reply!r} reply_text={reply_text!r} hang_up={hang_up}"
+    )
     return Response(
         content=voice_response.to_xml(), media_type=MEDIA_TYPE, status_code=200
     )
@@ -149,6 +173,7 @@ async def voice_webhook(request: Request):
 
 @app.post(WEBHOOK_CALL_STATUS_PATH)
 async def call_status_webhook(request: Request):
+    """Store call status updates received from Twilio in the conversation metadata."""
     form = await parse_twilio_form(request)
     call_sid = form.get("CallSid", DEFAULT_CALL_SID)
     call_status = form.get("CallStatus", "")
@@ -158,7 +183,9 @@ async def call_status_webhook(request: Request):
 
     if conversation is not None:
         conversation.metadata["call_status"] = call_status
-        save_transcript(call_sid, conversation.history, conversation.metadata, conversation.id)
+        save_transcript(
+            call_sid, conversation.history, conversation.metadata, conversation.id
+        )
         save_bug_report(call_sid, conversation.history, conversation.id)
 
     return Response(content=EMPTY_TWIML, media_type=MEDIA_TYPE)
@@ -166,12 +193,13 @@ async def call_status_webhook(request: Request):
 
 @app.post(WEBHOOK_RECORDING_STATUS_PATH)
 async def recording_status_webhook(request: Request):
+    """Save recording metadata and download the completed recording when available."""
     form = await parse_twilio_form(request)
     call_sid = form.get("CallSid", DEFAULT_CALL_SID)
     call_status = form.get("CallStatus", "")
     conversation = conversations.get(call_sid) or get_generated_conversation(
         call_sid, "random"
-    ) 
+    )
     save_recording_metadata(form, conversation)
     if form.get("RecordingStatus") == RECORDING_STATUS_COMPLETED:
         try:
@@ -184,6 +212,6 @@ async def recording_status_webhook(request: Request):
                 f"Failed to download recording audio! Download Error: {form['download_error']} SID: {call_sid}",
             )
     if call_status in call_statuses:
-            conversations.pop(call_sid, None)
-
+        conversations.pop(call_sid, None)
+    Timer(1, lambda: recording_saved_event.set()).start()
     return Response(content=EMPTY_TWIML, media_type=MEDIA_TYPE)

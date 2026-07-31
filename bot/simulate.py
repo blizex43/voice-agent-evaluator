@@ -5,12 +5,15 @@ from enums.strings import SIMULATION_SESSION_PREFIX
 from structs.prompts import ScenarioNamesType
 from enums.scenarios import get_scenario, scenario_to_messages
 from bot.transcript import save_transcript
+
+
 def build_simulation_session_id(scenario_name: ScenarioNamesType) -> str:
     """Compose a unique session id for a simulation run."""
     return f"{SIMULATION_SESSION_PREFIX}{scenario_name}-{uuid4().hex[:8]}"
 
 
 def run_simulation(scenario_name: ScenarioNamesType) -> None:
+    """Run a scripted scenario end to end and save its transcript and bug report."""
     scenario = get_scenario(scenario_name)
     session_id = build_simulation_session_id(scenario_name)
     conversation = Conversation(

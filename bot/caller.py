@@ -4,12 +4,14 @@ from twilio.rest import Client
 from enums.collections import credentials, urls
 from enums.logger import log_info, logger, log_and_raise
 from enums.strings import POLL_INTERVAL_SECONDS
-from bot.listeners import call_signal, call_ended_event
+from bot.listeners import call_signal, call_ended_event, recording_saved_event
 
 TERMINAL_CALL_STATUSES = {"completed", "canceled", "failed", "busy", "no-answer"}
 
 
 class Caller:
+    """Manage outbound Twilio calls and monitor their lifecycle."""
+
     def __init__(self):
         self.client = Client(
             credentials["twilio"]["account_sid"], credentials["twilio"]["auth_token"]
@@ -21,7 +23,7 @@ class Caller:
         self._stop_watcher = threading.Event()
 
     def end_call(self) -> None:
-        """End the most recent active call"""
+        """End the most recent active call if one exists."""
         if not self.recent_call:
             return
 
@@ -34,12 +36,13 @@ class Caller:
             log_and_raise(exc, f"Failed to end call {call_sid}")
 
     def _handle_call_completed(self, call_sid: str, status: str) -> None:
+        """Handle a terminal call status event and notify listeners."""
         log_info(f"Call status changed to {status} for {call_sid}")
         call_ended_event.set()
         call_signal.emit("call.ended", call_sid, status)
 
     def _fetch_call_status(self, call_sid: str) -> str | None:
-        """Fetch the current call status. Returns the status, or None on error."""
+        """Fetch the current Twilio call status, returning None on request errors."""
         try:
             return self.client.calls(call_sid).fetch().status
         except Exception:
@@ -47,6 +50,7 @@ class Caller:
             return None
 
     def _watch_call_status(self, call_sid: str) -> None:
+        """Poll Twilio until the call reaches a terminal status."""
         while not self._stop_watcher.is_set():
             status = self._fetch_call_status(call_sid)
             if status is None:
@@ -59,6 +63,7 @@ class Caller:
             time.sleep(POLL_INTERVAL_SECONDS)
 
     def _build_callback_urls(self, addr: str) -> dict[str, str]:
+        """Build webhook URLs for voice, status, and recording callbacks."""
         if not addr:
             addr = urls["endpoint"]
         return {
@@ -68,6 +73,7 @@ class Caller:
         }
 
     def make_call(self, addr: str):
+        """Create a Twilio call that routes responses to the local webhook handlers."""
         urls_map = self._build_callback_urls(addr)
         call = self.client.calls.create(
             to=self.to_number,
@@ -95,13 +101,19 @@ class Caller:
         log_info(f"Call started: {call.sid}")
         return call.sid
 
+
 def place_call(http: str = None) -> None:
+    """Place a call, wait for the conversation to finish, and then wait for recording cleanup."""
     call_ended_event.clear()
+
     def on_call_ended(call_sid: str, status: str) -> None:
         print(f"Received call.ended event: {call_sid} status={status}")
+
     call_signal.once("call.ended", on_call_ended)
     caller = Caller()
     call_sid = caller.make_call(http)
     print(f"Waiting for call to end for {call_sid}...")
     call_ended_event.wait()
-    print(f"Call process ending after call.ended for {call_sid}")
+    print(f"Call process ending after call.ended for {call_sid}.")
+    recording_saved_event.wait()
+    print(f"Recording process has ended for {call_sid}!")

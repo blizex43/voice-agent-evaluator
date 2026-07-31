@@ -1,32 +1,36 @@
-
 from bot.server import (
     serve_servers,
-    indefinitely_serve
 )
 from bot.caller import place_call
 from bot.config import validate_config
 from enums.dir import OUTPUT_DIR, RECORDING_DIR, REPORT_DIR, TRANSCRIPT_DIR
 from util.cmds import build_parser
+
+
 def ensure_output_dirs() -> None:
+    """Create the output folders used by transcripts, reports, and recordings."""
     for directory in [OUTPUT_DIR, RECORDING_DIR, REPORT_DIR, TRANSCRIPT_DIR]:
         directory.mkdir(parents=True, exist_ok=True)
 
+
 def run_server_and_call(host: str, port: int = 8000) -> None:
+    """Start the local server and place a real outbound call for live testing."""
     validate_config(require_twilio=True)
     tunnel = serve_servers(host, port)[0]
     try:
         place_call(tunnel.public_url)
     except KeyboardInterrupt:
         print("Stopping server after keyboard interrupt...")
-    finally:
-        indefinitely_serve()
+
 
 def validate_environment(require_twilio: bool) -> None:
+    """Validate that the environment has the credentials required for the requested mode."""
     validate_config(require_twilio=require_twilio)
     print("Environment looks good.")
 
 
 def main() -> None:
+    """Dispatch the command-line entrypoint for validation, serving, calling, or simulation."""
     ensure_output_dirs()
     parser = build_parser()
     args = parser.parse_args()

@@ -8,12 +8,14 @@ from enums.logger import log_and_raise
 from enums.strings import FILE_EXT_JSON, FILE_EXT_MD, FILE_PREFIX_REPORT
 from util.paths import get_incremented_file_dirs, ensure_output_dir
 
+
 def _contains_any(text: str, terms: List[str]) -> bool:
     normalized = text.lower()
     return any(term in normalized for term in terms)
 
 
 def detect_bugs(messages: List[Dict[str, str]]) -> List[Dict[str, str]]:
+    """Check the conversation history against predefined safety and behavior rules."""
     bugs = []
     full_assistant_text = " ".join(
         message["content"] for message in messages if message.get("role") == "assistant"
@@ -69,12 +71,13 @@ def detect_bugs(messages: List[Dict[str, str]]) -> List[Dict[str, str]]:
 
 
 def report_paths(index: int = None) -> Dict[str, Path]:
+    """Build the output file paths for the next bug report artifact."""
     ensure_output_dir(REPORT_DIR)
     return get_incremented_file_dirs(
         parent_dir=REPORT_DIR,
         extensions={FILE_EXT_JSON: FILE_EXT_JSON, FILE_EXT_MD: FILE_EXT_MD},
         prefix=FILE_PREFIX_REPORT,
-        index=index
+        index=index,
     )
 
 
@@ -94,7 +97,10 @@ def _write_json(path: Path, payload: dict) -> None:
         log_and_raise(exc, f"Failed to write JSON file {path}")
 
 
-def save_bug_report(session_id: str, messages: List[Dict[str, str]], conversation_id: int = None) -> Dict[str, Path]:
+def save_bug_report(
+    session_id: str, messages: List[Dict[str, str]], conversation_id: int = None
+) -> Dict[str, Path]:
+    """Analyze a conversation and write a JSON and Markdown bug report to disk."""
     bugs = detect_bugs(messages)
     paths = report_paths(conversation_id)
     payload = {
