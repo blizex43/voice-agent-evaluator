@@ -1,0 +1,191 @@
+BEGIN 
+
+CREATE required output folders 
+
+  
+
+PARSE the command entered by the user 
+
+  
+
+IF the command is VALIDATE THEN 
+
+    CHECK all required environment variables 
+
+    IF all required values are present THEN 
+
+        DISPLAY a message that the environment is valid 
+
+    ELSE 
+
+        DISPLAY a list of missing values 
+
+        STOP the program 
+
+    ENDIF
+
+ENDIF 
+
+  
+
+IF the command is SERVE THEN 
+
+    START the webhook server 
+
+    START the Ngrok tunnel 
+
+    KEEP the server running until the user stops it 
+
+ENDIF 
+
+  
+
+IF the command is CALL THEN 
+
+    CHECK Twilio configuration 
+
+    CREATE an outbound call 
+
+    WAIT until the call has ended 
+
+    WAIT until the recording has been saved 
+
+ENDIF 
+
+  
+
+IF the command is RUN THEN 
+
+    CHECK Twilio configuration 
+
+    START the webhook server and tunnel 
+
+    CREATE an outbound call 
+
+    WAIT until the call has ended 
+
+    WAIT until the recording has been saved 
+
+ENDIF 
+
+  
+
+IF the command is UNKNOWN THEN 
+
+    DISPLAY an error message 
+
+    STOP the program 
+
+ENDIF 
+
+ 
+
+END 
+
+ 
+
+WHEN a voice call is received: 
+
+ 
+
+RECEIVE the user input from Twilio 
+
+FIND the conversation for this call ID 
+
+IF no conversation exists THEN 
+
+    CREATE a new conversation 
+
+ENDIF 
+
+  
+
+IF the user input is empty or contains a blocked phrase THEN 
+
+    RETURN an empty response 
+
+ELSE 
+
+    SEND the user input to the conversation manager 
+
+    ASK the AI model for the next response 
+
+    EXTRACT the spoken reply and determine whether the call should end 
+
+    SAVE the transcript 
+
+    SAVE the bug report 
+
+    RETURN the spoken response to Twilio 
+
+ENDIF 
+
+ 
+
+END 
+
+ 
+
+WHEN a call status update is received: 
+
+ 
+
+STORE the latest call status in the conversation data 
+
+SAVE the transcript 
+
+SAVE the bug report 
+
+ 
+
+END 
+
+ 
+
+WHEN a recording status update is received: 
+
+ 
+
+SAVE recording information 
+
+IF the recording is complete THEN 
+
+    DOWNLOAD the audio file 
+
+    SAVE the audio file 
+
+ENDIF 
+
+SIGNAL that the recording process has finished 
+
+ 
+
+END 
+
+ 
+
+WHEN a simulation scenario is run: 
+
+SELECT a scenario 
+
+CREATE a conversation based on the scenario instructions 
+
+REPEAT until all scenario messages have been processed 
+
+    GET the next patient message 
+
+    SEND the message to the AI model 
+
+    STORE the assistant response 
+
+ENDREPEAT 
+
+SAVE the transcript 
+
+SAVE the bug report 
+
+ 
+
+END 
+
+ 
