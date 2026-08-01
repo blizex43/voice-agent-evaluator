@@ -8,7 +8,7 @@ from structs.parser import (
     ParserDefaultReturnType,
     ParserDictNecessitiesType,
 )
-from enums.prompts import blacklisted_phrases
+from enums.prompts import blacklist_items
 import re
 
 parser_functions: dict[ParserFunctionNamesType, Callable] = {}
@@ -28,7 +28,7 @@ def register_parser(name: ParserFunctionNamesType) -> ParserDefaultReturnType:
     return decorator
 
 
-def extract_inline(text: str, prefix: str, suffix: str) -> str | None:
+def extract_inline(text: str, prefix: str, suffix: str) -> tuple[str, bool]:
     """Extract the content between a parser prefix and suffix, if present."""
     if prefix and suffix:
         match = re.search(
@@ -36,7 +36,8 @@ def extract_inline(text: str, prefix: str, suffix: str) -> str | None:
             text,
             re.DOTALL,
         )
-        return match.group(1) if match else None
+        if match:
+            return (match.group(1), True)
 
     if prefix:
         match = re.search(
@@ -44,7 +45,8 @@ def extract_inline(text: str, prefix: str, suffix: str) -> str | None:
             text,
             re.DOTALL,
         )
-        return match.group(1) if match else None
+        if match:
+            return (match.group(1), True)
 
     if suffix:
         match = re.search(
@@ -52,9 +54,10 @@ def extract_inline(text: str, prefix: str, suffix: str) -> str | None:
             text,
             re.DOTALL,
         )
-        return match.group(1) if match else None
+        if match:
+            return (match.group(1), True)
 
-    return text
+    return (text, False)
 
 
 def parse_value(
@@ -72,8 +75,8 @@ def parse_value(
     prefix = value.get("prefix", "")
     suffix = value.get("suffix", "")
 
-    inline = extract_inline(input, prefix, suffix)
-    if inline is None:
+    inline, response = extract_inline(input, prefix, suffix)
+    if not response:
         return None
 
     parser_signal.emit("parser_succeeded", name, input)
@@ -111,9 +114,42 @@ def resolve_parser_reply(input: str) -> tuple[str, bool]:
 
 
 def is_blacklisted_input(text: str) -> bool:
-    """Return True when the incoming input contains a blocked phrase."""
-    lowered_text = text.lower()
-    return any(phrase.lower() in lowered_text for phrase in blacklisted_phrases)
+    """Return True if any blacklist phrase exists in the text."""
+    lowered = text.lower()
+
+    return any(
+        phrase.lower() in lowered
+        for item in blacklist_items
+        for phrase in item.get("phrases", ())
+    )
+
+
+def query_blacklisted_input(text: str) -> bool:
+    """Return False if a blacklist phrase exceeds its suffix word limit."""
+    if not text:
+        return True
+
+    lowered = text.lower()
+
+    for item in blacklist_items:
+        limit = item.get("suffix_word_limit", 0)
+        if limit <= 0:
+            continue
+
+        for phrase in item.get("phrases", ()):
+            phrase = phrase.lower()
+
+            index = lowered.find(phrase)
+            if index == -1:
+                continue
+
+            suffix = lowered[index + len(phrase) :].strip()
+            words = len(suffix.split())
+
+            if words > limit:
+                return False
+
+    return True
 
 
 def parse_response_for_matches(
@@ -127,12 +163,12 @@ def parse_response_for_matches(
             item[1].get("prefix", "") == "",  # False (0) first, True (1) last
         ),
     )
+
     for func_name, func_value in parsers:
         result = parse_value(input, func_name, func_value)
         if result is None:
             continue
         else:
-            input = result[0]
-        matches[func_name] = result[0]
+            matches[func_name] = result[0]
 
     return matches

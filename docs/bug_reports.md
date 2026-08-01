@@ -87,4 +87,45 @@ Mid conversation, the assistant agent failed to respond once again while typing 
 
 Solution: Internal fix on the agent's interpretation.
 
+## Bug 7: Patient Agent
+
+LLM: llama-3.1-8b-instant
+Voice: English-Polly.Gregory-Neural
+Severity: High  
+Call: `C:\Users\Jonathan\Downloads\Python Private\voice-agent-evaluator\output\transcripts\transcript_04.md`  
+Recording: `C:\Users\Jonathan\Downloads\Python Private\voice-agent-evaluator\output\transcripts\recording_04.md`  
+Timestamp: `3:57-END`
+
+Details:
+Patient tried ending the call, but parsing tool failed to catch the </end> statement
+
+Solution: Fix parsing for hanging up.
+
+## Bug 8: Assistant Agent
+
+LLM: llama-3.1-8b-instant
+Voice: English-Polly.Gregory-Neural
+Severity: High  
+Call: `C:\Users\Jonathan\Downloads\Python Private\voice-agent-evaluator\output\transcripts\transcript_08.md`  
+Recording: `C:\Users\Jonathan\Downloads\Python Private\voice-agent-evaluator\output\transcripts\recording_08.md`  
+Timestamp: `1:06-END`
+
+Details:
+Assistant once again ended the call a few seconds after the Patient responded
+
+Solution: Refer to Bug 6
+
+## Bug 9: Patient Agent
+
+LLM: llama-3.1-8b-instant
+Voice: English-Polly.Emma-Neural
+Severity: High  
+Call: `C:\Users\Jonathan\Downloads\Python Private\voice-agent-evaluator\output\transcripts\transcript_10.md`  
+Recording: `C:\Users\Jonathan\Downloads\Python Private\voice-agent-evaluator\output\transcripts\recording_10.md`  
+Timestamp: `1:00-1:10`
+
+Details: Patient started waiting when she heard "one moment", but the Assistant already finished, only paused briefly
+
+Solution: Add a blacklist options dict that alters how the blacklist behavior works
+
 ...

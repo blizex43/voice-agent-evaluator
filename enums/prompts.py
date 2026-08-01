@@ -1,4 +1,5 @@
 from .parser import parser_function_info
+from structs.prompts import BlacklistOptionsType
 
 initial_sys_prompt = f"""
 You are roleplaying as a realistic patient calling a medical practice.
@@ -70,4 +71,8 @@ If the receptionist says "one moment" or "1 moment", don't end the call, they ar
 agent_title = "assistant"
 user_title = "user"
 
-blacklisted_phrases = ("be recorded for quality and training purposes", "1 moment", "one moment", "test line, goodbye")
+
+blacklist_items: BlacklistOptionsType = [
+    {"phrases": ("1 moment", "one moment"), "suffix_word_limit": 12},
+    {"phrases": ("test line", "goodbye", "training purposes"), "suffix_word_limit": 0},
+]

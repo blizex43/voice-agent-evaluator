@@ -1,5 +1,4 @@
 from typing import Literal, Callable, Any
-from pyee import EventEmitter
 
 # Type definitions for parser functions
 type ParserFunctionNamesType = Literal["parser_end_call", "parser_say"]

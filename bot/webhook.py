@@ -22,7 +22,7 @@ from enums.strings import (
     WEBHOOK_VOICE_PATH,
 )
 from .listeners import parser_signal, recording_saved_event
-from .parser import resolve_parser_reply, is_blacklisted_input
+from .parser import query_blacklisted_input, resolve_parser_reply, is_blacklisted_input
 from typing import Literal
 from structs.parser import ParserFunctionNamesType
 from structs.prompts import ScenarioNamesType, Scenario
@@ -143,11 +143,17 @@ async def voice_webhook(request: Request):
     )
 
     scenario: Maybe[Scenario] = conversation.metadata.get("scenario")
+    is_blacklisted = is_blacklisted_input(user_input)
+    is_allowed = query_blacklisted_input(user_input)
     if (
-        (not DEFAULT_USER_INPUT)
-        and (not user_input)
-        and (conversation.metadata.get("call_status") == None)
-    ) or is_blacklisted_input(user_input):
+        (
+            (not DEFAULT_USER_INPUT)
+            and (not user_input)
+            and (conversation.metadata.get("call_status") == None)
+        )
+        or (is_blacklisted and not is_allowed)
+        or (is_blacklisted and user_input)
+    ):
         return send_empty_response()
 
     reply = await conversation.handle_user_message(user_input or DEFAULT_USER_INPUT)
