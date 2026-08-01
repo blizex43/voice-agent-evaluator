@@ -61,7 +61,7 @@ def parse_value(
     input: str,
     name: ParserFunctionNamesType,
     value: Maybe[ParserDictNecessitiesType] = None,
-) -> Maybe[tuple[str, ParserDefaultReturnType, ParserFunctionNamesType]]:
+) -> Maybe[tuple[str, ParserFunctionNamesType]]:
     """Check whether a response contains a parser marker and return the parsed result."""
     if not value:
         value = parser_function_info[name]
@@ -77,7 +77,7 @@ def parse_value(
         return None
 
     parser_signal.emit("parser_succeeded", name, input)
-    return inline, parser_functions[name], name
+    return (inline, name)
 
 
 @register_parser("parser_end_call")
@@ -102,15 +102,12 @@ def parse_response_for_functions(input: str) -> list[ParserFunctionNamesType]:
 
 def resolve_parser_reply(input: str) -> tuple[str, bool]:
     """Return the reply text and whether the call should end based on parser markers."""
-    for parser_name in parser_function_info.keys():
-        result = parse_value(input, parser_name, None)
-        if result is None:
-            continue
-
-        inline, _, matched_name = result
-        return inline, matched_name == "parser_end_call"
-
-    return input, False
+    matches = parse_response_for_matches(input)
+    if not matches:
+        return input, False
+    hang_up = "parser_end_call" in matches
+    exported_text = matches.get("parser_say") or list(matches.values())[0]
+    return exported_text, hang_up
 
 
 def is_blacklisted_input(text: str) -> bool:
@@ -121,9 +118,9 @@ def is_blacklisted_input(text: str) -> bool:
 
 def parse_response_for_matches(
     input: str,
-) -> list[tuple[ParserFunctionNamesType, ParserDefaultReturnType, str]]:
+) -> dict[ParserFunctionNamesType, str]:
     """Return all parser matches found in the input text with their extracted values."""
-    matches: list[tuple[ParserFunctionNamesType, ParserDefaultReturnType, str]] = []
+    matches: dict[ParserFunctionNamesType, str] = {}
     parsers = sorted(
         parser_function_info.items(),
         key=lambda item: (
@@ -135,9 +132,7 @@ def parse_response_for_matches(
         if result is None:
             continue
         else:
-            (input,) = result
-
-        inline, func = result
-        matches.append((func_name, func, inline))
+            input = result[0]
+        matches[func_name] = result[0]
 
     return matches

@@ -9,8 +9,8 @@ Test calls were made against the Pretty Good AI assessment line using the scenar
 LLM: llama-3.1-8b-instant
 Voice: English-Unknown
 Severity: Low-Medium  
-Call: `C:\Users\Jonathan\Downloads\Python Private\voice-agent-evaluator\output\transcripts\transcript_01.md`  
-Recording: `C:\Users\Jonathan\Downloads\Python Private\voice-agent-evaluator\output\recordings\recording_01.mp3`  
+Call: `DELETED`  
+Recording: `DELETED`  
 Timestamp: `0:05-2:03`
 
 Details:
@@ -21,8 +21,8 @@ Throughout the call, I could tell that when the other end was about to respond, 
 LLM: llama-3.1-8b-instant
 Voice: English-Unknown
 Severity: Medium  
-Call: `C:\Users\Jonathan\Downloads\Python Private\voice-agent-evaluator\output\transcripts\transcript_01.md`  
-Recording: `C:\Users\Jonathan\Downloads\Python Private\voice-agent-evaluator\output\recordings\recording_01.mp3`  
+Call: `DELETED`  
+Recording: `DELETED`  
 Timestamp: `1:51`
 
 Details:
@@ -33,8 +33,8 @@ While the patient was explaining why they were confused and clarify that they ne
 LLM: llama-3.1-8b-instant
 Voice: English-Unknown
 Severity: Medium  
-Call: `C:\Users\Jonathan\Downloads\Python Private\voice-agent-evaluator\output\transcripts\transcript_01.md`  
-Recording: `C:\Users\Jonathan\Downloads\Python Private\voice-agent-evaluator\output\recordings\recording_01.mp3`  
+Call: `DELETED`  
+Recording: `DELETED`  
 Timestamp: `0:05`
 
 Details:
@@ -48,8 +48,8 @@ Added blacklisted phrases so the agent can return an empty response to ignore an
 LLM: llama-3.1-8b-instant
 Voice: English-Unknown
 Severity: High  
-Call: `C:\Users\Jonathan\Downloads\Python Private\voice-agent-evaluator\output\transcripts\transcript_01.md`  
-Recording: `C:\Users\Jonathan\Downloads\Python Private\voice-agent-evaluator\output\recordings\recording_01.mp3`  
+Call: `DELETED` 
+Recording: `DELETED` 
 Timestamp: `0:05`
 
 Details:
@@ -64,13 +64,27 @@ Added keywords that will also wait for the assistant to finish: [1 moment while,
 LLM: llama-3.1-8b-instant
 Voice: English-Unknown
 Severity: High  
-Call: `C:\Users\Jonathan\Downloads\Python Private\voice-agent-evaluator\output\transcripts\transcript_02.md`  
+Call: `DELETED`  
 Recording: `None`  
 Timestamp: `Unavailable`
 
 Details:
 Mid conversation, the assistant agent failed to respond and left my patient hanging without ending the call. The patient was not able to fetch the recording.
 
-Patient Solution: Lower the timeout to 30 seconds.
+Solution: Lower the timeout to 30 seconds.
+
+## Bug 6: Assistant Agent
+
+LLM: llama-3.1-8b-instant
+Voice: English-Polly.Gregory-Neural
+Severity: High  
+Call: `C:\Users\Jonathan\Downloads\Python Private\voice-agent-evaluator\output\transcripts\transcript_01.md`  
+Recording: `C:\Users\Jonathan\Downloads\Python Private\voice-agent-evaluator\output\transcripts\recording_01.md`  
+Timestamp: `1.38-END`
+
+Details:
+Mid conversation, the assistant agent failed to respond once again while typing nonstop. This time, the assistant automatically ended the call after around 20 seconds.
+
+Solution: Internal fix on the agent's interpretation.
 
 ...

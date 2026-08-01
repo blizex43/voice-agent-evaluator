@@ -141,6 +141,7 @@ async def voice_webhook(request: Request):
     conversation = conversations.get(call_sid) or get_generated_conversation(
         call_sid, "random"
     )
+
     scenario: Maybe[Scenario] = conversation.metadata.get("scenario")
     if (
         (not DEFAULT_USER_INPUT)

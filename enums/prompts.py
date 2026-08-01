@@ -70,4 +70,4 @@ If the receptionist says "one moment" or "1 moment", don't end the call, they ar
 agent_title = "assistant"
 user_title = "user"
 
-blacklisted_phrases = ("be recorded for quality and training purposes", "1 moment", "one moment")
+blacklisted_phrases = ("be recorded for quality and training purposes", "1 moment", "one moment", "test line, goodbye")
