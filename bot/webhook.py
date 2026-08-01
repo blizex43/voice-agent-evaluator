@@ -101,7 +101,7 @@ def append_reply_to_voice_response(
     reply: str,
     voice_index: int = 4,
     timeout: int | Literal["auto"] = 30,
-    speech_timeout: int | Literal["auto"] = 1.2,
+    speech_timeout: int | Literal["auto"] = 1.8,
     language_index: int = 0,
     hang_up: bool = False,
 ) -> VoiceResponse:

@@ -73,6 +73,6 @@ user_title = "user"
 
 
 blacklist_items: BlacklistOptionsType = [
-    {"phrases": ("1 moment", "one moment"), "suffix_word_limit": 12},
+    {"phrases": ("1 moment", "one moment"), "suffix_word_limit": 8},
     {"phrases": ("test line", "goodbye", "training purposes"), "suffix_word_limit": 0},
 ]
