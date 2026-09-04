@@ -1,4 +1,4 @@
-# Pretty Good AI Voice Bot Challenge
+# AI Voice Bot Challenge
 
 Python harness for testing a healthcare AI receptionist over Twilio. It can validate configuration, run local scripted scenarios, start a webhook listener, or place a real outbound call.
 

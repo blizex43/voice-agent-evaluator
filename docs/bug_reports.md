@@ -48,8 +48,8 @@ Added blacklisted phrases so the agent can return an empty response to ignore an
 LLM: llama-3.1-8b-instant
 Voice: English-Unknown
 Severity: High  
-Call: `DELETED` 
-Recording: `DELETED` 
+Call: `DELETED`
+Recording: `DELETED`
 Timestamp: `0:05`
 
 Details:
@@ -78,8 +78,8 @@ Solution: Lower the timeout to 30 seconds.
 LLM: llama-3.1-8b-instant
 Voice: English-Polly.Gregory-Neural
 Severity: High  
-Call: `C:\Users\Jonathan\Downloads\Python Private\voice-agent-evaluator\output\transcripts\transcript_01.md`  
-Recording: `C:\Users\Jonathan\Downloads\Python Private\voice-agent-evaluator\output\transcripts\recording_01.md`  
+Call: `C:\Users\bliz\Downloads\Python Private\voice-agent-evaluator\output\transcripts\transcript_01.md`  
+Recording: `C:\Users\bliz\Downloads\Python Private\voice-agent-evaluator\output\transcripts\recording_01.md`  
 Timestamp: `1.38-END`
 
 Details:
@@ -92,8 +92,8 @@ Solution: Internal fix on the agent's interpretation.
 LLM: llama-3.1-8b-instant
 Voice: English-Polly.Gregory-Neural
 Severity: High  
-Call: `C:\Users\Jonathan\Downloads\Python Private\voice-agent-evaluator\output\transcripts\transcript_04.md`  
-Recording: `C:\Users\Jonathan\Downloads\Python Private\voice-agent-evaluator\output\transcripts\recording_04.md`  
+Call: `C:\Users\bliz\Downloads\Python Private\voice-agent-evaluator\output\transcripts\transcript_04.md`  
+Recording: `C:\Users\bliz\Downloads\Python Private\voice-agent-evaluator\output\transcripts\recording_04.md`  
 Timestamp: `3:57-END`
 
 Details:
@@ -106,8 +106,8 @@ Solution: Fix parsing for hanging up.
 LLM: llama-3.1-8b-instant
 Voice: English-Polly.Gregory-Neural
 Severity: High  
-Call: `C:\Users\Jonathan\Downloads\Python Private\voice-agent-evaluator\output\transcripts\transcript_08.md`  
-Recording: `C:\Users\Jonathan\Downloads\Python Private\voice-agent-evaluator\output\transcripts\recording_08.md`  
+Call: `C:\Users\bliz\Downloads\Python Private\voice-agent-evaluator\output\transcripts\transcript_08.md`  
+Recording: `C:\Users\bliz\Downloads\Python Private\voice-agent-evaluator\output\transcripts\recording_08.md`  
 Timestamp: `1:06-END`
 
 Details:
@@ -120,8 +120,8 @@ Solution: Refer to Bug 6
 LLM: llama-3.1-8b-instant
 Voice: English-Polly.Emma-Neural
 Severity: High  
-Call: `C:\Users\Jonathan\Downloads\Python Private\voice-agent-evaluator\output\transcripts\transcript_10.md`  
-Recording: `C:\Users\Jonathan\Downloads\Python Private\voice-agent-evaluator\output\transcripts\recording_10.md`  
+Call: `C:\Users\bliz\Downloads\Python Private\voice-agent-evaluator\output\transcripts\transcript_10.md`  
+Recording: `C:\Users\bliz\Downloads\Python Private\voice-agent-evaluator\output\transcripts\recording_10.md`  
 Timestamp: `1:00-1:10`
 
 Details: Patient started waiting when she heard "one moment", but the Assistant already finished, only paused briefly
